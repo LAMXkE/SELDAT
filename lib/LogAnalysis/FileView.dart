@@ -1,11 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class FileView extends StatelessWidget {
   final List<File> files;
 
-  const FileView({required this.files});
+  const FileView({super.key, required this.files});
 
   @override
   Widget build(BuildContext context) {

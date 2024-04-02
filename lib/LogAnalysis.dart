@@ -1,12 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:seldat/LogAnalysis/FileView.dart';
 import 'dart:io';
 
 class LogAnalysis extends StatelessWidget {
   List<File> filelist = List.filled(1, File("/Security.evtx"));
+
+  LogAnalysis({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -25,9 +24,8 @@ class LogAnalysis extends StatelessWidget {
                         flex: 3,
                         child: Container(
                             clipBehavior: Clip.hardEdge,
-                            decoration: BoxDecoration(
-                              border:
-                                  Border.(width: 1.0, color: Colors.black54),
+                            decoration: const BoxDecoration(
+                              border: Border(width: 1.0, color: Colors.black54),
                             ),
                             child: FileView(files: filelist)),
                       ),
@@ -42,7 +40,7 @@ class LogAnalysis extends StatelessWidget {
                     child: Container(
                         decoration: BoxDecoration(
                             border: Border.all(color: Colors.black54)),
-                        child: Center(child: Text("log timeline placeholder"))))
+                        child: const Center(child: Text("log timeline placeholder"))))
               ],
             ),
           ),
@@ -51,7 +49,7 @@ class LogAnalysis extends StatelessWidget {
             child: Container(
                 decoration:
                     BoxDecoration(border: Border.all(color: Colors.black54)),
-                child: Center(child: Text("Detail Placeholder"))),
+                child: const Center(child: Text("Detail Placeholder"))),
           )
         ],
       ),
