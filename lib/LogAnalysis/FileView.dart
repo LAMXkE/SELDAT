@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class FileView extends StatelessWidget {
-  final List<File> files;
+  final List files;
 
   const FileView({super.key, required this.files});
 
@@ -17,7 +17,17 @@ class FileView extends StatelessWidget {
             shrinkWrap: true,
             itemBuilder: (context, index) {
               return ListTile(
-                title: Text(files[index].path),
+                title: Text(
+                  // Uri.decodeFull(
+                  files[index]
+                      .path
+                      .toString()
+                      .split('/')
+                      .last
+                      .replaceAll(".csv", ""),
+                  // ),
+                  style: const TextStyle(fontSize: 12),
+                ),
                 onTap: () {
                   // Handle file tap event
                 },
