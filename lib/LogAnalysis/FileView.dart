@@ -8,34 +8,21 @@ class FileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        const Center(child: Text("Files")),
-        Expanded(
-          child: ListView.builder(
-            itemCount: files.length,
-            shrinkWrap: true,
-            itemBuilder: (context, index) {
-              return ListTile(
-                title: Text(
-                  // Uri.decodeFull(
-                  files[index]
-                      .path
-                      .toString()
-                      .split('/')
-                      .last
-                      .replaceAll(".csv", ""),
-                  // ),
-                  style: const TextStyle(fontSize: 12),
-                ),
-                onTap: () {
-                  // Handle file tap event
-                },
-              );
-            },
+    return ListView.builder(
+      itemCount: files.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(
+            // Uri.decodeFull(
+            files[index].path.toString().split('/').last.replaceAll(".csv", ""),
+            // ),
+            style: const TextStyle(fontSize: 12),
           ),
-        ),
-      ],
+          onTap: () {
+            // Handle file tap event
+          },
+        );
+      },
     );
   }
 }

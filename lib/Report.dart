@@ -6,17 +6,16 @@ import 'dart:io';
 
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 
-class LogAnalysis extends StatefulWidget {
-  const LogAnalysis({
+class Report extends StatefulWidget {
+  const Report({
     super.key,
   });
 
   @override
-  State<LogAnalysis> createState() => _LogAnalysisState();
+  State<Report> createState() => _ReportState();
 }
 
-class _LogAnalysisState extends State<LogAnalysis>
-    with AutomaticKeepAliveClientMixin {
+class _ReportState extends State<Report> with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
   LogFetcher logFetcher = LogFetcher();
@@ -25,7 +24,7 @@ class _LogAnalysisState extends State<LogAnalysis>
   @override
   void initState() {
     super.initState();
-    print("Log Analysis");
+    print("Report");
     eventLogList = logFetcher.getEventLogList();
   }
 
@@ -46,14 +45,23 @@ class _LogAnalysisState extends State<LogAnalysis>
                       flex: 3,
                       child: Container(
                           clipBehavior: Clip.hardEdge,
+                          alignment: Alignment.topLeft,
                           decoration: BoxDecoration(
                             border: Border.all(
                               width: 1.0,
                               color: Colors.black54,
                             ),
                           ),
-                          child: FileView(
-                            files: eventLogList,
+                          child: ExpansionTile(
+                            title: const Text(".Evtx"),
+                            children: [
+                              SizedBox(
+                                height: 200,
+                                child: FileView(
+                                  files: eventLogList,
+                                ),
+                              )
+                            ],
                           )),
                     ),
                     const Flexible(
