@@ -14,9 +14,16 @@ class FileView extends StatelessWidget {
         return ListTile(
           title: Text(
             // Uri.decodeFull(
-            files[index].path.toString().split('/').last.replaceAll(".csv", ""),
+            files[index]
+                .path
+                .toString()
+                .split('\\')
+                .last
+                .replaceAll(".csv", "")
+                .replaceAll("%4", "/"),
             // ),
-            style: const TextStyle(fontSize: 12),
+            style:
+                const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
           ),
           onTap: () {
             // Handle file tap event

@@ -7,8 +7,11 @@ import 'dart:io';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 
 class LogAnalysis extends StatefulWidget {
+  final LogFetcher logFetcher;
+
   const LogAnalysis({
     super.key,
+    required this.logFetcher,
   });
 
   @override
@@ -19,14 +22,13 @@ class _LogAnalysisState extends State<LogAnalysis>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
-  LogFetcher logFetcher = LogFetcher();
-  late List<File> eventLogList;
+  late List<File> eventLogFileList;
 
   @override
   void initState() {
     super.initState();
     print("Log Analysis");
-    eventLogList = logFetcher.getEventLogList();
+    eventLogFileList = widget.logFetcher.getEventLogFileList();
   }
 
   @override
@@ -53,7 +55,7 @@ class _LogAnalysisState extends State<LogAnalysis>
                             ),
                           ),
                           child: FileView(
-                            files: eventLogList,
+                            files: eventLogFileList,
                           )),
                     ),
                     const Flexible(

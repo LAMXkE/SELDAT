@@ -1,9 +1,12 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 class Artifacts extends StatelessWidget {
   final PieChartData data;
-  const Artifacts({super.key, required this.data});
+  final int totalArtifactsCount;
+  const Artifacts(
+      {super.key, required this.data, required this.totalArtifactsCount});
 
   @override
   Widget build(BuildContext context) {
@@ -11,10 +14,11 @@ class Artifacts extends StatelessWidget {
       child: Column(
         children: [
           const Text("Artifacts"),
-          Container(
-            child: Column(
-              children: [const Text("108223"), PieChart(data)],
-            ),
+          Column(
+            children: [
+              Text("$totalArtifactsCount Artifacts"),
+              SizedBox(width: 300, height: 300, child: PieChart(data)),
+            ],
           ),
         ],
       ),

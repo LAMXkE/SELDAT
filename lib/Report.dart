@@ -1,36 +1,69 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:seldat/LogAnalysis.dart';
 import 'package:seldat/LogAnalysis/FileView.dart';
 import 'dart:io';
 
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
+import 'package:seldat/Registry.dart';
+import 'package:seldat/Registry/RegistryFetcher.dart';
 
 class Report extends StatefulWidget {
+  final LogFetcher logFetcher;
+  final RegistryFetcher registryFetcher;
   const Report({
     super.key,
+    required this.logFetcher,
+    required this.registryFetcher,
   });
 
   @override
   State<Report> createState() => _ReportState();
 }
 
-class _ReportState extends State<Report> with AutomaticKeepAliveClientMixin {
+class _ReportState extends State<Report>
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   @override
   bool get wantKeepAlive => true;
-  LogFetcher logFetcher = LogFetcher();
-  late List<File> eventLogList;
-
   @override
   void initState() {
     super.initState();
     print("Report");
-    eventLogList = logFetcher.getEventLogList();
+  }
+
+  late TabController reportTabController =
+      TabController(length: 4, vsync: this);
+
+  @override
+  void dispose() {
+    reportTabController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    return Column(
+      children: [
+        _tabBar(),
+        Expanded(
+          child: TabBarView(
+            controller: reportTabController,
+            children: [
+              LogAnalysis(
+                logFetcher: widget.logFetcher,
+              ),
+              RegistryUI(
+                registryFetcher: widget.registryFetcher,
+              ),
+              const Center(child: Text("SRUM Placeholder")),
+              const Center(child: Text("Prefetch Placeholder")),
+            ],
+          ),
+        )
+      ],
+    );
     return Row(
       children: [
         Flexible(
@@ -52,15 +85,29 @@ class _ReportState extends State<Report> with AutomaticKeepAliveClientMixin {
                               color: Colors.black54,
                             ),
                           ),
-                          child: ExpansionTile(
-                            title: const Text(".Evtx"),
+                          child: Column(
                             children: [
-                              SizedBox(
-                                height: 200,
-                                child: FileView(
-                                  files: eventLogList,
-                                ),
-                              )
+                              ExpansionTile(
+                                title: const Text(".Evtx"),
+                                children: [
+                                  SizedBox(
+                                    height: 200,
+                                    child: FileView(
+                                      files: widget.logFetcher.eventLogFileList,
+                                    ),
+                                  )
+                                ],
+                              ),
+                              ExpansionTile(
+                                  title: const Text("Registry"),
+                                  children: [
+                                    SizedBox(
+                                      height: 300,
+                                      child: RegistryUI(
+                                        registryFetcher: widget.registryFetcher,
+                                      ),
+                                    ),
+                                  ]),
                             ],
                           )),
                     ),
@@ -98,5 +145,27 @@ class _ReportState extends State<Report> with AutomaticKeepAliveClientMixin {
         ),
       ],
     );
+  }
+
+  Widget _tabBar() {
+    return TabBar(
+        controller: reportTabController,
+        labelColor: Colors.black,
+        tabAlignment: TabAlignment.fill,
+        tabs: const [
+          Tab(
+            height: 35,
+            child: Text("Log Analysis"),
+          ),
+          Tab(
+            height: 35,
+            child: Text("Registry"),
+          ),
+          Tab(
+            height: 35,
+            child: Text("SRUM"),
+          ),
+          Tab(height: 35, child: Text("Prefetch")),
+        ]);
   }
 }

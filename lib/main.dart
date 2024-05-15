@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:win32/win32.dart';
-import 'package:win32_registry/win32_registry.dart';
+import 'package:seldat/Dashboard/DashboardSkeleton.dart';
+import 'package:seldat/LogAnalysis/LogFetcher.dart';
+import 'package:seldat/Registry/RegistryFetcher.dart';
+import 'package:seldat/Report/ReportSkeleton.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:seldat/Dashboard.dart';
-import 'package:seldat/LogAnalysis.dart';
-import 'package:seldat/Registry.dart';
 import 'package:seldat/Report.dart';
 import 'package:seldat/settings.dart';
 import 'dart:io';
@@ -16,11 +15,13 @@ import 'package:window_manager/window_manager.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await windowManager.ensureInitialized();
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
 
   WindowOptions windowOptions = const WindowOptions(
       size: Size(1600, 1000),
       center: true,
-      title: "Seldat",
+      title: "SELDAT",
       titleBarStyle: TitleBarStyle.hidden,
       skipTaskbar: false,
       backgroundColor: Colors.white,
@@ -44,15 +45,62 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
-  bool scanning = false;
-  late TabController tabController = TabController(length: 3, vsync: this);
+  late TabController tabController = TabController(length: 4, vsync: this);
   final Color _primaryColor = const Color.fromARGB(255, 0xFF, 0x61, 0x61);
   bool isMaximized = false;
+  LogFetcher logFetcher = LogFetcher();
+  RegistryFetcher registryFetcher = RegistryFetcher();
+  bool scanned = false;
 
   @override
   void dispose() {
     tabController.dispose();
     super.dispose();
+  }
+
+  void startScan() async {
+    setState(() {
+      scanned = true;
+    });
+    logFetcher.setAddCount(addEventLog);
+    logFetcher.scanFiles(Directory('C:\\Windows\\System32\\winevt\\Logs'));
+    // registryFetcher.fetchRegistry();
+  }
+
+  int evtxCount = 0;
+  int regCount = 0;
+  int srumCount = 0;
+  int prefetchCount = 0;
+  int jumplistCount = 0;
+
+  void addEventLog() {
+    setState(() {
+      evtxCount++;
+    });
+  }
+
+  void addRegistry() {
+    setState(() {
+      regCount++;
+    });
+  }
+
+  void addSRUM() {
+    setState(() {
+      srumCount++;
+    });
+  }
+
+  void addPrefetch() {
+    setState(() {
+      prefetchCount++;
+    });
+  }
+
+  void addJumplist() {
+    setState(() {
+      jumplistCount++;
+    });
   }
 
   @override
@@ -79,10 +127,10 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
           appBar: AppBar(
             shadowColor: Colors.black,
             title: GestureDetector(
-              onPanDown: (DragDownDetails details) {
+              onTapDown: (TapDownDetails detail) {
                 windowManager.startDragging();
               },
-              behavior: HitTestBehavior.opaque,
+              behavior: HitTestBehavior.translucent,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -101,21 +149,6 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                         onPressed: () {
                           print("minimize");
                           windowManager.minimize();
-                        },
-                      ),
-                      IconButton(
-                        icon: isMaximized
-                            ? const Icon(Icons.maximize_rounded)
-                            : const Icon(Icons.maximize),
-                        onPressed: () {
-                          if (isMaximized) {
-                            windowManager.unmaximize();
-                          } else {
-                            windowManager.maximize();
-                          }
-                          setState(() {
-                            isMaximized = !isMaximized;
-                          });
                         },
                       ),
                       IconButton(
@@ -138,10 +171,55 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
               Expanded(
                 child: TabBarView(
                   controller: tabController,
-                  children: const [
-                    Dashboard(),
-                    Report(),
-                    SetupPage(),
+                  children: [
+                    if (scanned)
+                      Dashboard(
+                          evtxCount: evtxCount,
+                          regCount: regCount,
+                          srumCount: srumCount,
+                          prefetchCount: prefetchCount,
+                          jumplistCount: jumplistCount)
+                    else
+                      DashboardSkeleton(startAnalysis: startScan),
+                    if (scanned)
+                      Report(
+                        logFetcher: logFetcher,
+                        registryFetcher: registryFetcher,
+                      )
+                    else
+                      const ReportSkeleton(),
+                    const SetupPage(),
+                    Center(
+                      child: Column(
+                        children: [
+                          ElevatedButton(
+                              onPressed: () {
+                                addEventLog();
+                              },
+                              child: const Text("Add Evtx")),
+                          ElevatedButton(
+                              onPressed: () {
+                                addRegistry();
+                              },
+                              child: const Text("Add Registry")),
+                          ElevatedButton(
+                              onPressed: () {
+                                addSRUM();
+                              },
+                              child: const Text("Add SRUM")),
+                          ElevatedButton(
+                              onPressed: () {
+                                addPrefetch();
+                              },
+                              child: const Text("Add Prefetch")),
+                          ElevatedButton(
+                              onPressed: () {
+                                addJumplist();
+                              },
+                              child: const Text("Add Jumplist")),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               )
@@ -167,7 +245,8 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
           text: "Dashboard",
         ),
         Tab(height: 35, text: "Report"),
-        Tab(height: 35, text: "Settings")
+        Tab(height: 35, text: "Settings"),
+        Tab(height: 35, text: "Test"),
       ],
     );
   }
