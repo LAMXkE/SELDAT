@@ -30,9 +30,9 @@ class LogFetcher {
   Future<bool> loadDB() async {
     DatabaseManager db = DatabaseManager();
     await db.open();
-    List<Map<String, Object?>> evtxFiles = await db.getEvtxFileList();
-    if (evtxFiles.isNotEmpty) {
-      for (var file in evtxFiles) {
+    List<Map<String, Object?>> evtxFileList = await db.getEvtxFileList();
+    if (evtxFileList.isNotEmpty) {
+      for (var file in evtxFileList) {
         print(file);
         eventLogFileList.add(File(file['filename'].toString()));
         addCount(int.parse(file['logCount'].toString()));
@@ -119,6 +119,8 @@ class LogFetcher {
         await db.insertEventLog(log);
         addCount(1);
       }
+      db.insertEvtxFiles(evtxFiles(
+          filename: file.path, logCount: value.length, isFetched: true));
     });
   }
 

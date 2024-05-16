@@ -140,16 +140,19 @@ class DatabaseManager {
 
 class evtxFiles {
   final String filename;
+  final int logCount;
   final bool isFetched;
 
   const evtxFiles({
     required this.filename,
+    required this.logCount,
     required this.isFetched,
   });
 
   Map<String, Object?> toMap() {
     return {
       'filename': filename,
+      'logCount': logCount,
       'isFetched': isFetched ? 1 : 0,
     };
   }
