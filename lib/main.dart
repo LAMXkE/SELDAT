@@ -58,6 +58,25 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    logFetcher.setAddCount(addEventLog);
+    registryFetcher.setAddCount(addRegistry);
+
+    logFetcher.loadDB().then((value) => {
+          if (value)
+            {
+              setState(() {
+                scanned = true;
+              })
+            }
+        });
+    // registryFetcher.setAddSRUM(addSRUM);
+    // registryFetcher.setAddPrefetch(addPrefetch);
+    // registryFetcher.setAddJumplist(addJumplist);
+  }
+
   void startScan() async {
     setState(() {
       scanned = true;
@@ -73,15 +92,15 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   int prefetchCount = 0;
   int jumplistCount = 0;
 
-  void addEventLog() {
+  void addEventLog(int count) {
     setState(() {
-      evtxCount++;
+      evtxCount += count;
     });
   }
 
-  void addRegistry() {
+  void addRegistry(int count) {
     setState(() {
-      regCount++;
+      regCount += count;
     });
   }
 
@@ -136,7 +155,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                 children: [
                   // Icon(icon: Icons.menu, color: Colors.white),
                   Text(
-                    "Seldat",
+                    "SELDAT",
                     style: GoogleFonts.inter(
                         fontSize: 20,
                         color: _primaryColor,
@@ -194,12 +213,12 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                         children: [
                           ElevatedButton(
                               onPressed: () {
-                                addEventLog();
+                                addEventLog(1);
                               },
                               child: const Text("Add Evtx")),
                           ElevatedButton(
                               onPressed: () {
-                                addRegistry();
+                                addRegistry(1);
                               },
                               child: const Text("Add Registry")),
                           ElevatedButton(

@@ -19,8 +19,29 @@ class LogFetcher {
   // Constructor
   LogFetcher() {
     // Constructor code...
-    Directory(".\\Artifacts").create();
-    Directory(".\\Artifacts\\EventLogs").create();
+    if (!Directory(".\\Artifacts").existsSync()) {
+      Directory(".\\Artifacts").create();
+    }
+    if (!Directory(".\\Artifacts\\EventLogs").existsSync()) {
+      Directory(".\\Artifacts\\EventLogs").create();
+    }
+  }
+
+  Future<bool> loadDB() async {
+    DatabaseManager db = DatabaseManager();
+    await db.open();
+    List<Map<String, Object?>> evtxFiles = await db.getEvtxFileList();
+    if (evtxFiles.isNotEmpty) {
+      for (var file in evtxFiles) {
+        print(file);
+        eventLogFileList.add(File(file['filename'].toString()));
+        addCount(int.parse(file['logCount'].toString()));
+      }
+      db.close();
+      return true;
+    }
+    db.close();
+    return false;
   }
 
   void setAddCount(Function addCount) {
@@ -96,7 +117,7 @@ class LogFetcher {
             timestamp: DateTime.parse(timeCreated));
         //write to sqlite database
         await db.insertEventLog(log);
-        addCount();
+        addCount(1);
       }
     });
   }

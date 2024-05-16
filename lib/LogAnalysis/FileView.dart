@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 
 class FileView extends StatelessWidget {
   final List files;
+  final Function setSelected;
 
-  const FileView({super.key, required this.files});
+  const FileView({super.key, required this.files, required this.setSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class FileView extends StatelessWidget {
                 const TextStyle(fontSize: 12, overflow: TextOverflow.ellipsis),
           ),
           onTap: () {
-            // Handle file tap event
+            setSelected(files[index].path.toString());
           },
         );
       },

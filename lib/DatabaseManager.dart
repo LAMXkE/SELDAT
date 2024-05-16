@@ -22,6 +22,23 @@ class DatabaseManager {
     await database!.insert('evtx', event.toMap());
   }
 
+  Future<void> insertEvtxFiles(evtxFiles evtxFile) async {
+    await database!.insert('evtxFiles', evtxFile.toMap());
+  }
+
+  Future<List<Map<String, Object?>>> getEvtxFileList() {
+    return database!.query('evtxFiles');
+  }
+
+  Future<List<Map<String, Object?>>> getEventLogList(String filename) {
+    if (filename == "") {
+      return database!.query('evtx');
+    }
+
+    return database!
+        .query('evtx', where: 'filename = ?', whereArgs: [filename]);
+  }
+
   Future<void> insertRegistry(registry reg) async {
     await database?.insert('registry', reg.toMap());
   }
@@ -50,7 +67,15 @@ class DatabaseManager {
       join(Directory.current.path, 'database.db'),
       version: 1,
       onCreate: (Database db, int version) async {
-        return db.execute('''CREATE TABLE evtx(
+        return db.execute('''
+                          CREATE TABLE evtxFiles(
+                            id INTEGER PRIMARY KEY,
+                            filename TEXT,
+                            logCount INTEGER,
+                            isFetched BOOLEAN
+                          );
+
+                          CREATE TABLE evtx(
                             id INTEGER NOT NULL,
                             timestamp DATETIME,
                             filename VARCHAR,
@@ -110,6 +135,23 @@ class DatabaseManager {
                           ''');
       },
     );
+  }
+}
+
+class evtxFiles {
+  final String filename;
+  final bool isFetched;
+
+  const evtxFiles({
+    required this.filename,
+    required this.isFetched,
+  });
+
+  Map<String, Object?> toMap() {
+    return {
+      'filename': filename,
+      'isFetched': isFetched ? 1 : 0,
+    };
   }
 }
 
