@@ -50,7 +50,6 @@ class _LogAnalysisState extends State<LogAnalysis>
     for (var event in eventLogList) {
       rows.add(DataRow(
         cells: [
-          DataCell(Text(event['id'].toString())),
           DataCell(Text(event['riskScore'].toString())),
           DataCell(Text(DateTime.fromMillisecondsSinceEpoch(
                   int.parse(event['timestamp'].toString()))
@@ -152,7 +151,6 @@ class _LogAnalysisState extends State<LogAnalysis>
         children: [
           DataTable(
             columns: const [
-              DataColumn(label: Text("ID"), numeric: true),
               DataColumn(label: Text("Risk Score")),
               DataColumn(label: Text("Timestamp")),
               DataColumn(label: Text("Event ID")),
@@ -167,7 +165,6 @@ class _LogAnalysisState extends State<LogAnalysis>
                 showCheckboxColumn: false,
                 headingRowHeight: 0,
                 columns: const [
-                  DataColumn(label: Text("ID"), numeric: true),
                   DataColumn(label: Text("Risk Score"), numeric: true),
                   DataColumn(label: Text("Timestamp")),
                   DataColumn(label: Text("Event ID"), numeric: true),
