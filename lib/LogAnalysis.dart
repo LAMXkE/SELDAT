@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:paged_datatable/paged_datatable.dart';
 import 'package:seldat/DatabaseManager.dart';
 import 'package:seldat/LogAnalysis/FileView.dart';
 import 'dart:io';
@@ -23,14 +24,13 @@ class LogAnalysis extends StatefulWidget {
   State<LogAnalysis> createState() => _LogAnalysisState();
 }
 
-class _LogAnalysisState extends State<LogAnalysis>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
+class _LogAnalysisState extends State<LogAnalysis> {
   late List<File> eventLogFileList;
   DatabaseManager db = DatabaseManager();
   String selectedFilename = "";
+  int selectedFile = 0;
   XmlDocument detail = XmlDocument.parse("<empty/>");
+  int pageSize = 15;
 
   @override
   void initState() {
@@ -71,7 +71,6 @@ class _LogAnalysisState extends State<LogAnalysis>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return Row(
       children: [
         Flexible(
@@ -94,10 +93,19 @@ class _LogAnalysisState extends State<LogAnalysis>
                           ),
                           child: FileView(
                             files: eventLogFileList,
-                            setSelected: (String filename) {
+                            selected: selectedFile,
+                            setSelected: (String filename, int index) {
                               setState(() {
+                                if (selectedFilename == filename) {
+                                  selectedFilename = "";
+                                  selectedFile = -1;
+                                  _controller.refresh();
+                                  return;
+                                }
                                 selectedFilename = filename;
-                                eventlogList = getEventLogList();
+                                selectedFile = index;
+                                // eventlogList = getEventLogList();
+                                _controller.refresh();
                               });
                             },
                           )),
@@ -116,15 +124,7 @@ class _LogAnalysisState extends State<LogAnalysis>
                     border: Border.all(color: Colors.black54),
                   ),
                   width: double.infinity,
-                  clipBehavior: Clip.hardEdge,
-                  child: FutureBuilder(
-                      future: eventlogList,
-                      builder: (context, snapshot) =>
-                          snapshot.connectionState == ConnectionState.done
-                              ? _logLists(snapshot.data as List<DataRow>)
-                              : const Center(
-                                  child: CircularProgressIndicator(),
-                                )),
+                  child: _logLists(),
                 ),
               ),
             ],
@@ -143,34 +143,117 @@ class _LogAnalysisState extends State<LogAnalysis>
     );
   }
 
-  SizedBox _logLists(List<DataRow> snapshot) {
+  final _controller = PagedDataTableController<String, eventLog>();
+
+  SizedBox _logLists() {
     return SizedBox(
       width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DataTable(
-            columns: const [
-              DataColumn(label: Text("Risk Score")),
-              DataColumn(label: Text("Timestamp")),
-              DataColumn(label: Text("Event ID")),
-              DataColumn(label: Text("context"))
-            ],
-            rows: List.empty(),
-          ),
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: DataTable(
-                showCheckboxColumn: false,
-                headingRowHeight: 0,
-                columns: const [
-                  DataColumn(label: Text("Risk Score"), numeric: true),
-                  DataColumn(label: Text("Timestamp")),
-                  DataColumn(label: Text("Event ID"), numeric: true),
-                  DataColumn(label: Text("context"))
+            child: PagedDataTableTheme(
+              data: PagedDataTableThemeData(
+                footerHeight: 40,
+                headerHeight: 40,
+                rowHeight: 45,
+                rowColor: (index) {
+                  if (index % 2 == 0) {
+                    return Colors.grey[200]!;
+                  }
+                  return Colors.white;
+                },
+              ),
+              child: PagedDataTable<String, eventLog>(
+                controller: _controller,
+                initialPageSize: 15,
+                pageSizes: const [15, 30, 50, 100],
+                configuration: const PagedDataTableConfiguration(),
+                fetcher: (pageSize, sortModel, filterModel, pageToken) async {
+                  await db.open();
+                  String? orderBy;
+                  bool descending = false;
+                  if (sortModel != null) {
+                    orderBy = sortModel.fieldName;
+                    descending = sortModel.descending;
+                  }
+                  int? eventId;
+                  if (filterModel["event_id"] != null) {
+                    eventId = int.parse(filterModel["event_id"] as String);
+                  }
+                  final PaginatedList<eventLog> data = await db.getEventLog(
+                    filename: selectedFilename,
+                    event_id: eventId,
+                    content: filterModel["content"] as String?,
+                    anomaly: filterModel["anomaly"] as bool?,
+                    malicious: filterModel["malicious"] as bool?,
+                    orderBy: orderBy,
+                    sortDesc: descending,
+                    pageSize: pageSize,
+                    pageToken: pageToken,
+                  );
+                  db.close();
+                  return (data.items, data.nextPageToken);
+                },
+                filters: [
+                  TextTableFilter(
+                      id: "content",
+                      chipFormatter: (value) => "Log contains $value",
+                      name: "Log"),
+                  TextTableFilter(
+                      chipFormatter: (value) => "Event ID is $value",
+                      id: "event_id",
+                      name: "EventID"),
                 ],
-                rows: snapshot,
+                fixedColumnCount: 2,
+                columns: [
+                  TableColumn(
+                    title: const Text("Risk Score"),
+                    cellBuilder: (context, item, index) {
+                      return GestureDetector(
+                          onTap: () => setState(() {
+                                detail = XmlDocument.parse(item.full_log);
+                              }),
+                          child: Text(item.riskScore.toString()));
+                    },
+                    size: const FixedColumnSize(130),
+                  ),
+                  TableColumn(
+                    title: const Text("Filename"),
+                    cellBuilder: (context, item, index) => GestureDetector(
+                        onTap: () => setState(() {
+                              detail = XmlDocument.parse(item.full_log);
+                            }),
+                        child: Text(item.filename
+                            .split("\\")
+                            .last
+                            .replaceAll("%4", "/"))),
+                    size: const FixedColumnSize(300),
+                  ),
+                  TableColumn(
+                    id: "timestamp",
+                    title: const Text("Timestamp"),
+                    cellBuilder: (context, item, index) => GestureDetector(
+                      onTap: () => setState(() {
+                        detail = XmlDocument.parse(item.full_log);
+                      }),
+                      child: Text(item.timestamp.toLocal().toString()),
+                    ),
+                    size: const FixedColumnSize(300),
+                    sortable: true,
+                  ),
+                  TableColumn(
+                    id: "event_id",
+                    title: const Text("Event ID"),
+                    cellBuilder: (context, item, index) => GestureDetector(
+                        onTap: () => setState(() {
+                              detail = XmlDocument.parse(item.full_log);
+                            }),
+                        child: Text(item.event_id.toString())),
+                    size: const FixedColumnSize(200),
+                    sortable: true,
+                  ),
+                ],
               ),
             ),
           ),

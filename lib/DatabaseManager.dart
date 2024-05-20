@@ -1,5 +1,7 @@
+import 'dart:collection';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:math';
 import 'dart:ui';
 
 import 'package:sqflite/sqflite.dart';
@@ -37,6 +39,97 @@ class DatabaseManager {
 
     return database!
         .query('evtx', where: 'filename = ?', whereArgs: [filename]);
+  }
+
+  Future<PaginatedList<eventLog>> getEventLog({
+    required String filename,
+    required int pageSize,
+    required String? pageToken,
+    int? event_id,
+    bool? anomaly,
+    bool? malicious,
+    String? content,
+    String? orderBy,
+    bool sortDesc = false,
+  }) async {
+    print("pageToken $pageToken");
+    List<Map<String, Object?>> eventLogs =
+        List.from(await getEventLogList(filename));
+
+    print("$event_id, $anomaly, $malicious, $content, $orderBy, $sortDesc");
+
+    if (orderBy == null) {
+      print("[*] orderby is null Sorting by timestamp");
+      eventLogs.sort(
+          (b, a) => (a['timestamp'] as int).compareTo(b['timestamp'] as int));
+    } else if (orderBy == "riskScore") {
+      eventLogs.sort((b, a) => sortDesc
+          ? (a['riskScore'] as double).compareTo(b['riskScore'] as double)
+          : (b['riskScore'] as double).compareTo(a['riskScore'] as double));
+    } else if (orderBy == "timestamp") {
+      print("[*] Sorting by timestamp $sortDesc");
+      eventLogs.sort((b, a) => sortDesc
+          ? (a['timestamp'] as int).compareTo(b['timestamp'] as int)
+          : (b['timestamp'] as int).compareTo(a['timestamp'] as int));
+    } else if (orderBy == "event_id") {
+      eventLogs.sort((b, a) => sortDesc
+          ? (a['event_id'] as int).compareTo(b['event_id'] as int)
+          : (b['event_id'] as int).compareTo(a['event_id'] as int));
+    }
+
+    int nextId = pageToken == null ? 0 : int.tryParse(pageToken) ?? 1;
+    int nextIndex =
+        eventLogs.indexWhere((element) => element['id'] as int == nextId);
+    if (nextIndex == -1) {
+      nextIndex = 0;
+    }
+    eventLogs = eventLogs.sublist(nextIndex);
+
+    if (anomaly != null) {
+      eventLogs = eventLogs
+          .where((element) => element['riskScore'] as int > 0.5)
+          .toList();
+    }
+
+    if (content != null) {
+      eventLogs = eventLogs
+          .where((element) => element['full_log'].toString().contains(content))
+          .toList();
+    }
+
+    if (malicious != null) {
+      eventLogs = eventLogs
+          .where((element) => element['riskScore'] as int > 0.8)
+          .toList();
+    }
+
+    if (event_id != null) {
+      eventLogs = eventLogs
+          .where((element) => element['event_id'] as int == event_id)
+          .toList();
+    }
+
+    List<eventLog> logs = eventLogs
+        .map((e) => eventLog(
+              id: e['id'] as int,
+              timestamp:
+                  DateTime.fromMillisecondsSinceEpoch(e['timestamp'] as int),
+              filename: e['filename'] as String,
+              full_log: e['full_log'] as String,
+              isAnalyzed: e['isAnalyzed'] as int == 1 ? true : false,
+              riskScore: e['riskScore'] as double,
+              event_id: e['event_id'] as int,
+            ))
+        .take(pageSize + 1)
+        .toList();
+
+    String? nextPageToken;
+    if (logs.length == pageSize + 1) {
+      eventLog last = logs.removeLast();
+      nextPageToken = last.id.toString();
+    }
+
+    return PaginatedList(items: logs, nextPageToken: nextPageToken);
   }
 
   Future<void> insertRegistry(registry reg) async {
@@ -138,6 +231,20 @@ class DatabaseManager {
   }
 }
 
+class PaginatedList<T> {
+  final Iterable<T> _items;
+  final String? _nextPageToken;
+
+  List<T> get items => UnmodifiableListView(_items);
+  String? get nextPageToken => _nextPageToken;
+
+  PaginatedList({
+    required Iterable<T> items,
+    String? nextPageToken,
+  })  : _items = items,
+        _nextPageToken = nextPageToken;
+}
+
 class evtxFiles {
   final String filename;
   final int logCount;
@@ -159,6 +266,7 @@ class evtxFiles {
 }
 
 class eventLog {
+  final int? id;
   final DateTime timestamp;
   final String filename;
   final String full_log;
@@ -167,6 +275,7 @@ class eventLog {
   final int event_id;
 
   const eventLog({
+    this.id,
     required this.timestamp,
     required this.filename,
     required this.full_log,

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:paged_datatable/l10n/generated/l10n.dart';
 import 'package:seldat/Dashboard/DashboardSkeleton.dart';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
@@ -141,8 +142,12 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
             )
           ]),
       child: MaterialApp(
+        localizationsDelegates: const [
+          PagedDataTableLocalization.delegate,
+        ],
         color: Colors.transparent,
         home: Scaffold(
+          backgroundColor: Colors.white,
           appBar: AppBar(
             shadowColor: Colors.black,
             title: GestureDetector(
