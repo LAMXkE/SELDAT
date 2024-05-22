@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:xml/xml.dart';
+import 'LogDetail.dart';
 
 class LogAnalysis extends StatefulWidget {
   final LogFetcher logFetcher;
@@ -263,13 +264,16 @@ class _LogAnalysisState extends State<LogAnalysis> {
   }
 
   Container _detailUI() {
+    //String xmlData = detail.toXmlString();
+
     return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.black54),
-      ),
-      child: Center(
-        child: Text(detail.toXmlString()),
-      ),
+      // decoration: BoxDecoration(
+      //   border: Border.all(color: Colors.black54),
+      // ),
+      // child: Center(
+      //   child: Text(detail.toXmlString()),
+      // ),
+      child: LogDetailElementsViewer(xmlData: detail),
     );
   }
 }
