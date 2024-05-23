@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:seldat/DatabaseManager.dart';
@@ -22,17 +24,21 @@ class GraphView extends StatelessWidget {
     List<int> countdata = List.empty(growable: true);
     for (var item in data!.items) {
       if (timedata.isEmpty) {
-        timedata.add(item.timestamp.toString().substring(0, 19));
+        timedata.add(item.timestamp.toString().substring(0, 16));
         countdata.add(1);
-      } else if (timedata.last == item.timestamp.toString().substring(0, 19)) {
+      } else if (timedata.last == item.timestamp.toString().substring(0, 16)) {
         countdata.last += 1;
       } else {
         if (maxy < countdata.last) {
           maxy = countdata.last;
         }
-        timedata.add(item.timestamp.toString().substring(0, 19));
+        timedata.add(item.timestamp.toString().substring(0, 16));
         countdata.add(1);
       }
+    }
+
+    if (maxy < countdata.last) {
+      maxy = countdata.last;
     }
 
     final chartdata = LineChartData(
@@ -44,15 +50,15 @@ class GraphView extends StatelessWidget {
         ),
       ],
       minY: 0,
-      maxY: maxy.toDouble() + 3,
+      maxY: (maxy * 1.3 + 2).round().toDouble(),
       titlesData: FlTitlesData(
         bottomTitles: AxisTitles(
           axisNameWidget:
-              Text("Time ${timedata[0].toString().substring(0, 16)}"),
+              Text("Time ${timedata[0].toString().substring(0, 13)}"),
           sideTitles: SideTitles(
             showTitles: true,
             getTitlesWidget: (value, meta) =>
-                Text(timedata[value.toInt()].toString().substring(17)),
+                Text(timedata[value.toInt()].toString().substring(14, 16)),
           ),
         ),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
