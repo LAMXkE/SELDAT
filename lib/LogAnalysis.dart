@@ -12,6 +12,8 @@ import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:xml/xml.dart';
 
+import 'LogAnalysis/GraphView.dart';
+
 class LogAnalysis extends StatefulWidget {
   final LogFetcher logFetcher;
 
@@ -28,10 +30,10 @@ class _LogAnalysisState extends State<LogAnalysis> {
   late List<File> eventLogFileList;
   DatabaseManager db = DatabaseManager();
   String selectedFilename = "";
-  int selectedFile = 0;
+  int selectedFile = -1;
   XmlDocument detail = XmlDocument.parse("<empty/>");
   int pageSize = 15;
-
+  PaginatedList<eventLog>? logdata;
   @override
   void initState() {
     super.initState();
@@ -39,35 +41,7 @@ class _LogAnalysisState extends State<LogAnalysis> {
     eventLogFileList = widget.logFetcher.getEventLogFileList();
   }
 
-  Future<List<DataRow>> eventlogList = Future(() => List.empty());
-
-  Future<List<DataRow>> getEventLogList() async {
-    await db.open();
-    List<DataRow> rows = [];
-    List<Map<String, Object?>> eventLogList =
-        await db.getEventLogList(selectedFilename);
-
-    for (var event in eventLogList) {
-      rows.add(DataRow(
-        cells: [
-          DataCell(Text(event['riskScore'].toString())),
-          DataCell(Text(DateTime.fromMillisecondsSinceEpoch(
-                  int.parse(event['timestamp'].toString()))
-              .toLocal()
-              .toString())),
-          DataCell(Text(event['event_id'].toString())),
-          const DataCell(Text("")),
-        ],
-        onSelectChanged: (checked) {
-          setState(() {
-            detail = XmlDocument.parse(event['full_log'].toString());
-          });
-        },
-      ));
-    }
-    db.close();
-    return rows;
-  }
+  //
 
   @override
   Widget build(BuildContext context) {
@@ -104,15 +78,14 @@ class _LogAnalysisState extends State<LogAnalysis> {
                                 }
                                 selectedFilename = filename;
                                 selectedFile = index;
-                                // eventlogList = getEventLogList();
                                 _controller.refresh();
                               });
                             },
                           )),
                     ),
-                    const Flexible(
+                    Flexible(
                       flex: 7,
-                      child: Center(child: Text("Graph Placeholder")),
+                      child: GraphView(data: logdata),
                     ),
                   ],
                 ),
@@ -192,6 +165,9 @@ class _LogAnalysisState extends State<LogAnalysis> {
                     pageSize: pageSize,
                     pageToken: pageToken,
                   );
+                  setState(() {
+                    logdata = data;
+                  });
                   db.close();
                   return (data.items, data.nextPageToken);
                 },
