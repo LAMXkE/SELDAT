@@ -18,6 +18,8 @@ dependencies:
   sqflite_common_ffi: any
   xml: ^6.5.0
   paged_datatable: ^2.0.1
+  tflite_flutter: ^0.10.4
+  koala: ^0.1.6
 
 dev_dependencies:
   flutter_test:

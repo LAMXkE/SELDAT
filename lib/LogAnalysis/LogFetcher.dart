@@ -4,8 +4,10 @@ import 'dart:io';
 
 import 'package:ffi/src/utf16.dart';
 import 'package:flutter/services.dart';
+import 'package:koala/koala.dart';
 import 'package:seldat/DatabaseManager.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:win32/win32.dart';
 import 'package:xml/xml.dart';
 import 'package:xml/xpath.dart';
@@ -86,6 +88,40 @@ class LogFetcher {
     }
   }
 
+  // DataFrame createDataFrame(List<Map<String, Object?>> eventLogs) {
+  //   DataFrame df = DataFrame.empty();
+  //   List<String> eventId = List.empty(growable: true);
+  //   List<DateTime> timestamp = List.empty(growable: true);
+  //   for (var logObj in eventLogs) {
+  //     XmlDocument log =  XmlDocument.parse(logObj['full_log'].toString());
+
+  //     if(log.xpath("Event/System/EventID").isEmpty){
+  //         eventId.add("N/A");
+  //     }else{
+  //       eventId.add(log.xpath("Event/System/EventID").first.innerText);
+  //     }
+
+  //     if(log.xpath("Event/System/TimeCreated").isEmpty){
+  //         timestamp.add(DateTime.fromMillisecondsSinceEpoch(0)); //TODO: Change to 0 when the time is not available in the log (e.g. Security log does not have time in the log file)
+  //     }
+  //     else{
+  //       timestamp.add(
+  //         DateTime.fromMillisecondsSinceEpoch(
+  //           int.parse( log.xpath("Event/System/TimeCreated").first.getAttribute("SystemTime").toString())
+  //           )
+  //       );
+  //     }
+
+  //   }
+
+  //   df.addColumn("EventID", eventId);
+  //   df.addColumn("Timestamp", timestamp);
+
+  //   // group list with seconds
+
+  //   return df;
+  // }
+
   Future parseEventLog(File file, DatabaseManager db) async {
     await runevtxdump(file.path).then((value) async {
       List<String> eventList = value.split(RegExp(r"Record [0-9]*"));
@@ -122,6 +158,26 @@ class LogFetcher {
       db.insertEvtxFiles(evtxFiles(
           filename: file.path, logCount: value.length, isFetched: true));
     });
+  }
+
+  Future<void> runAIModelPredict() async {
+    Interpreter interpreter =
+        await Interpreter.fromAsset('blobs/autoencoder_model.tflite');
+
+    interpreter.getInputTensors();
+    List<Tensor> input = List.empty(growable: true);
+
+    interpreter.allocateTensors();
+    DatabaseManager db = DatabaseManager();
+    await db.open();
+
+    List<Map<String, Object?>> eventLogs = await db.getEventLogWithExplorer();
+    List<String> output = List.empty(growable: true);
+    for (var log in eventLogs) {}
+
+    interpreter.run(input, output);
+
+    db.close();
   }
 
   List<File> getEventLogFileList() {

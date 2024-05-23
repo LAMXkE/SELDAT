@@ -41,6 +41,29 @@ class DatabaseManager {
         .query('evtx', where: 'filename = ?', whereArgs: [filename]);
   }
 
+  Future<void> updateEventLog(int id, bool isAnalyzed, double riskScore) async {
+    await database!.update(
+      'evtx',
+      {'isAnalyzed': isAnalyzed ? 1 : 0, 'riskScore': riskScore},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<Map<String, Object?>>> getEventLogWithExplorer() {
+    //  get Logs that are not analyzed and are in the same minute timerange of first log
+    // Execute raw SQL query
+
+    return database!.query('evtx',
+        orderBy: 'timestamp ASC',
+        where: 'full_log LIKE ?',
+        whereArgs: ['%explorer.exe%']);
+  }
+
+  Future<List<Map<String, Object?>>> getRegistryList() {
+    return database!.query('registry');
+  }
+
   Future<PaginatedList<eventLog>> getEventLog({
     required String filename,
     required int pageSize,
