@@ -185,15 +185,15 @@ class _LogAnalysisState extends State<LogAnalysis> {
                 fixedColumnCount: 2,
                 columns: [
                   TableColumn(
-                    title: const Text("Risk Score"),
-                    cellBuilder: (context, item, index) {
-                      return GestureDetector(
-                          onTap: () => setState(() {
-                                detail = XmlDocument.parse(item.full_log);
-                              }),
-                          child: Text(item.riskScore.toString()));
-                    },
-                    size: const FixedColumnSize(130),
+                    id: "event_id",
+                    title: const Text("Event ID"),
+                    cellBuilder: (context, item, index) => GestureDetector(
+                        onTap: () => setState(() {
+                              detail = XmlDocument.parse(item.full_log);
+                            }),
+                        child: Text(item.event_id.toString())),
+                    size: const FixedColumnSize(200),
+                    sortable: true,
                   ),
                   TableColumn(
                     title: const Text("Filename"),
@@ -209,7 +209,7 @@ class _LogAnalysisState extends State<LogAnalysis> {
                   ),
                   TableColumn(
                     id: "timestamp",
-                    title: const Text("Timestamp"),
+                    title: const Text("SystemTime"),
                     cellBuilder: (context, item, index) => GestureDetector(
                       onTap: () => setState(() {
                         detail = XmlDocument.parse(item.full_log);
@@ -217,17 +217,6 @@ class _LogAnalysisState extends State<LogAnalysis> {
                       child: Text(item.timestamp.toLocal().toString()),
                     ),
                     size: const FixedColumnSize(300),
-                    sortable: true,
-                  ),
-                  TableColumn(
-                    id: "event_id",
-                    title: const Text("Event ID"),
-                    cellBuilder: (context, item, index) => GestureDetector(
-                        onTap: () => setState(() {
-                              detail = XmlDocument.parse(item.full_log);
-                            }),
-                        child: Text(item.event_id.toString())),
-                    size: const FixedColumnSize(200),
                     sortable: true,
                   ),
                 ],

@@ -34,8 +34,6 @@ class GraphView extends StatelessWidget {
         countdata.add(1);
       }
     }
-    print(countdata);
-    print(timedata);
 
     final chartdata = LineChartData(
       lineBarsData: [
@@ -45,6 +43,7 @@ class GraphView extends StatelessWidget {
           }),
         ),
       ],
+      minY: 0,
       maxY: maxy.toDouble() + 3,
       titlesData: FlTitlesData(
         bottomTitles: AxisTitles(
