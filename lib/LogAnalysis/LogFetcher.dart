@@ -17,9 +17,10 @@ class LogFetcher {
   List<File> eventLogFileList = List.empty(growable: true);
   Function addCount = () {};
   bool isFetched = false;
+  final DatabaseManager db;
 
   // Constructor
-  LogFetcher() {
+  LogFetcher(this.db) {
     // Constructor code...
     if (!Directory(".\\Artifacts").existsSync()) {
       Directory(".\\Artifacts").create();
@@ -30,8 +31,6 @@ class LogFetcher {
   }
 
   Future<bool> loadDB() async {
-    DatabaseManager db = DatabaseManager();
-    await db.open();
     List<Map<String, Object?>> evtxFileList = await db.getEvtxFileList();
     if (evtxFileList.isNotEmpty) {
       for (var file in evtxFileList) {
@@ -39,10 +38,8 @@ class LogFetcher {
         eventLogFileList.add(File(file['filename'].toString()));
         addCount(int.parse(file['logCount'].toString()));
       }
-      db.close();
       return true;
     }
-    db.close();
     return false;
   }
 
@@ -57,12 +54,10 @@ class LogFetcher {
   // Methods
   void scanFiles(Directory dir) async {
     await scan(dir);
-    DatabaseManager db = DatabaseManager();
-    await db.open();
     for (var file in eventLogFileList) {
       await parseEventLog(file, db);
     }
-    db.close();
+    await runAIModelPredict();
   }
 
   Future scan(Directory dir) async {
@@ -88,40 +83,6 @@ class LogFetcher {
     }
   }
 
-  // DataFrame createDataFrame(List<Map<String, Object?>> eventLogs) {
-  //   DataFrame df = DataFrame.empty();
-  //   List<String> eventId = List.empty(growable: true);
-  //   List<DateTime> timestamp = List.empty(growable: true);
-  //   for (var logObj in eventLogs) {
-  //     XmlDocument log =  XmlDocument.parse(logObj['full_log'].toString());
-
-  //     if(log.xpath("Event/System/EventID").isEmpty){
-  //         eventId.add("N/A");
-  //     }else{
-  //       eventId.add(log.xpath("Event/System/EventID").first.innerText);
-  //     }
-
-  //     if(log.xpath("Event/System/TimeCreated").isEmpty){
-  //         timestamp.add(DateTime.fromMillisecondsSinceEpoch(0)); //TODO: Change to 0 when the time is not available in the log (e.g. Security log does not have time in the log file)
-  //     }
-  //     else{
-  //       timestamp.add(
-  //         DateTime.fromMillisecondsSinceEpoch(
-  //           int.parse( log.xpath("Event/System/TimeCreated").first.getAttribute("SystemTime").toString())
-  //           )
-  //       );
-  //     }
-
-  //   }
-
-  //   df.addColumn("EventID", eventId);
-  //   df.addColumn("Timestamp", timestamp);
-
-  //   // group list with seconds
-
-  //   return df;
-  // }
-
   Future parseEventLog(File file, DatabaseManager db) async {
     await runevtxdump(file.path).then((value) async {
       List<String> eventList = value.split(RegExp(r"Record [0-9]*"));
@@ -143,41 +104,48 @@ class LogFetcher {
         if (timeCreated == null) {
           continue;
         }
+        int eventRecordId = int.parse(
+            record.xpath("/Event/System/EventRecordID").first.innerText);
 
         eventLog log = eventLog(
             event_id: int.parse(eventId),
             filename: file.path,
+            event_record_id: eventRecordId,
             full_log: event,
             isAnalyzed: false,
-            riskScore: 0.0,
+            isMalicious: false,
             timestamp: DateTime.parse(timeCreated));
         //write to sqlite database
         await db.insertEventLog(log);
         addCount(1);
       }
       db.insertEvtxFiles(evtxFiles(
-          filename: file.path, logCount: value.length, isFetched: true));
+          filename: file.path, logCount: eventList.length, isFetched: true));
     });
   }
 
   Future<void> runAIModelPredict() async {
-    Interpreter interpreter =
-        await Interpreter.fromAsset('blobs/autoencoder_model.tflite');
+    print("Running AI Model");
+    Process.run("./tools/runModel.exe", []).then((ProcessResult process) {
+      bool isResult = false;
+      process.stdout.toString().split("\n").forEach((element) {
+        if (isResult) {
+          if (element.length < 19) return;
+          String timeGroup = element.substring(0, 19);
+          bool isMalicious = element.contains("True");
 
-    interpreter.getInputTensors();
-    List<Tensor> input = List.empty(growable: true);
-
-    interpreter.allocateTensors();
-    DatabaseManager db = DatabaseManager();
-    await db.open();
-
-    List<Map<String, Object?>> eventLogs = await db.getEventLogWithExplorer();
-    List<String> output = List.empty(growable: true);
-    for (var log in eventLogs) {}
-
-    interpreter.run(input, output);
-
-    db.close();
+          if (isMalicious) {
+            db.updateMaliciousEvtx(
+                DateTime.parse(timeGroup).millisecondsSinceEpoch +
+                    9 * 60 * 60 * 1000);
+          }
+        }
+        if (element.contains("[*] Printing results")) {
+          isResult = true;
+        }
+      });
+    });
+    // eventLog(event_id: 0, filename: "", full_log: "", isAnalyzed: false, riskScore: 0.0, timestamp: DateTime.now());
   }
 
   List<File> getEventLogFileList() {
@@ -186,7 +154,7 @@ class LogFetcher {
 
   Future<String> runevtxdump(String path) async {
     var process =
-        await Process.run('evtxdump.exe', [path], stdoutEncoding: utf8);
+        await Process.run('./tools/evtxdump.exe', [path], stdoutEncoding: utf8);
 
     return process.stdout;
   }

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -21,18 +22,30 @@ class DatabaseManager {
   DatabaseManager();
 
   Future<void> insertEventLog(eventLog event) async {
+    if (database == null) {
+      await open();
+    }
     await database!.insert('evtx', event.toMap());
   }
 
   Future<void> insertEvtxFiles(evtxFiles evtxFile) async {
+    if (database == null) {
+      await open();
+    }
     await database!.insert('evtxFiles', evtxFile.toMap());
   }
 
-  Future<List<Map<String, Object?>>> getEvtxFileList() {
+  Future<List<Map<String, Object?>>> getEvtxFileList() async {
+    if (database == null) {
+      await open();
+    }
     return database!.query('evtxFiles');
   }
 
-  Future<List<Map<String, Object?>>> getEventLogList(String filename) {
+  Future<List<Map<String, Object?>>> getEventLogList(String filename) async {
+    if (database == null) {
+      await open();
+    }
     if (filename == "") {
       return database!.query('evtx');
     }
@@ -41,26 +54,39 @@ class DatabaseManager {
         .query('evtx', where: 'filename = ?', whereArgs: [filename]);
   }
 
-  Future<void> updateEventLog(int id, bool isAnalyzed, double riskScore) async {
-    await database!.update(
-      'evtx',
-      {'isAnalyzed': isAnalyzed ? 1 : 0, 'riskScore': riskScore},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+  Future<void> updateMaliciousEvtx(int timestamp) async {
+    if (database == null) {
+      await open();
+    }
+    await database!.update('evtx', {'isMalicious': 1},
+        where: 'timestamp >= ? AND timestamp < ?',
+        whereArgs: [timestamp, timestamp + 60 * 1000]);
   }
 
-  Future<List<Map<String, Object?>>> getEventLogWithExplorer() {
+  Future<void> updateEventLog(eventLog event) async {
+    if (database == null) {
+      await open();
+    }
+    await database!
+        .update('evtx', event.toMap(), where: 'id = ?', whereArgs: [event.id]);
+  }
+
+  Future<List<Map<String, Object?>>> getEventLogWithExplorer() async {
     //  get Logs that are not analyzed and are in the same minute timerange of first log
     // Execute raw SQL query
-
+    if (database == null) {
+      await open();
+    }
     return database!.query('evtx',
         orderBy: 'timestamp ASC',
         where: 'full_log LIKE ?',
         whereArgs: ['%explorer.exe%']);
   }
 
-  Future<List<Map<String, Object?>>> getRegistryList() {
+  Future<List<Map<String, Object?>>> getRegistryList() async {
+    if (database == null) {
+      await open();
+    }
     return database!.query('registry');
   }
 
@@ -73,6 +99,7 @@ class DatabaseManager {
     bool? malicious,
     String? content,
     String? orderBy,
+    DateTimeRange? timestamp,
     bool sortDesc = false,
   }) async {
     print("pageToken $pageToken");
@@ -85,10 +112,6 @@ class DatabaseManager {
       print("[*] orderby is null Sorting by timestamp");
       eventLogs.sort(
           (b, a) => (a['timestamp'] as int).compareTo(b['timestamp'] as int));
-    } else if (orderBy == "riskScore") {
-      eventLogs.sort((b, a) => sortDesc
-          ? (a['riskScore'] as double).compareTo(b['riskScore'] as double)
-          : (b['riskScore'] as double).compareTo(a['riskScore'] as double));
     } else if (orderBy == "timestamp") {
       print("[*] Sorting by timestamp $sortDesc");
       eventLogs.sort((b, a) => sortDesc
@@ -108,6 +131,16 @@ class DatabaseManager {
     }
     eventLogs = eventLogs.sublist(nextIndex);
 
+    if (timestamp != null) {
+      int from = timestamp.start.millisecondsSinceEpoch;
+      int to = timestamp.end.millisecondsSinceEpoch;
+      eventLogs = eventLogs
+          .where((element) =>
+              element['timestamp'] as int >= from &&
+              element['timestamp'] as int <= to)
+          .toList();
+    }
+
     if (anomaly != null) {
       eventLogs = eventLogs
           .where((element) => element['riskScore'] as int > 0.5)
@@ -122,7 +155,7 @@ class DatabaseManager {
 
     if (malicious != null) {
       eventLogs = eventLogs
-          .where((element) => element['riskScore'] as int > 0.8)
+          .where((element) => element['isMalicious'] as int == 1)
           .toList();
     }
 
@@ -135,13 +168,14 @@ class DatabaseManager {
     List<eventLog> logs = eventLogs
         .map((e) => eventLog(
               id: e['id'] as int,
+              event_record_id: e['event_record_id'] as int,
               timestamp:
                   DateTime.fromMillisecondsSinceEpoch(e['timestamp'] as int),
               filename: e['filename'] as String,
               full_log: e['full_log'] as String,
               isAnalyzed: e['isAnalyzed'] as int == 1 ? true : false,
-              riskScore: e['riskScore'] as double,
-              event_id: e['event_id'] as int,
+              isMalicious: e['isMalicious'] as int == 1 ? true : false,
+              event_id: int.parse(e['event_id'].toString()),
             ))
         .take(pageSize + 1)
         .toList();
@@ -194,10 +228,10 @@ class DatabaseManager {
                           CREATE TABLE evtx(
                             id INTEGER NOT NULL,
                             timestamp DATETIME,
+                            event_record_id INT,
                             filename VARCHAR,
                             full_log TEXT,
-                            "isAnalyzed" BOOLEAN,
-                            "riskScore" DOUBLE,
+                            "isMalicious" BOOLEAN,
                             event_id INTEGER NOT NULL,
                             PRIMARY KEY(id)
                           );
@@ -294,26 +328,29 @@ class eventLog {
   final String filename;
   final String full_log;
   final bool isAnalyzed;
-  final double riskScore;
+  final bool isMalicious;
   final int event_id;
+  final int event_record_id;
 
   const eventLog({
     this.id,
+    required this.event_record_id,
     required this.timestamp,
     required this.filename,
     required this.full_log,
     required this.isAnalyzed,
-    required this.riskScore,
+    required this.isMalicious,
     required this.event_id,
   });
 
   Map<String, dynamic> toMap() {
     return {
+      'event_record_id': event_record_id,
       'timestamp': timestamp.millisecondsSinceEpoch,
       'filename': filename,
       'full_log': full_log,
       'isAnalyzed': isAnalyzed ? 1 : 0,
-      'riskScore': riskScore,
+      'isMalicious': isMalicious ? 1 : 0,
       'event_id': event_id,
     };
   }

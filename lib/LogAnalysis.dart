@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -29,20 +30,20 @@ class LogAnalysis extends StatefulWidget {
 
 class _LogAnalysisState extends State<LogAnalysis> {
   late List<File> eventLogFileList;
-  DatabaseManager db = DatabaseManager();
+  late DatabaseManager db;
   String selectedFilename = "";
   int selectedFile = -1;
   XmlDocument detail = XmlDocument.parse("<empty/>");
   int pageSize = 15;
+  List<int> maliciousList = [];
   PaginatedList<eventLog>? logdata;
   @override
   void initState() {
+    db = widget.logFetcher.db;
     super.initState();
     print("Log Analysis");
     eventLogFileList = widget.logFetcher.getEventLogFileList();
   }
-
-  //
 
   @override
   Widget build(BuildContext context) {
@@ -132,8 +133,8 @@ class _LogAnalysisState extends State<LogAnalysis> {
                 headerHeight: 40,
                 rowHeight: 45,
                 rowColor: (index) {
-                  if (index % 2 == 0) {
-                    return Colors.grey[200]!;
+                  if (maliciousList.contains(index)) {
+                    return Colors.red[100];
                   }
                   return Colors.white;
                 },
@@ -144,7 +145,6 @@ class _LogAnalysisState extends State<LogAnalysis> {
                 pageSizes: const [15, 30, 50, 100],
                 configuration: const PagedDataTableConfiguration(),
                 fetcher: (pageSize, sortModel, filterModel, pageToken) async {
-                  await db.open();
                   String? orderBy;
                   bool descending = false;
                   if (sortModel != null) {
@@ -155,12 +155,20 @@ class _LogAnalysisState extends State<LogAnalysis> {
                   if (filterModel["event_id"] != null) {
                     eventId = int.parse(filterModel["event_id"] as String);
                   }
+                  bool? anomaly;
+                  if (filterModel["malicious"] == "Anomaly") {
+                    anomaly = true;
+                  } else if (filterModel["malicious"] == "Normal") {
+                    anomaly = false;
+                  } else {
+                    anomaly = null;
+                  }
                   final PaginatedList<eventLog> data = await db.getEventLog(
                     filename: selectedFilename,
                     event_id: eventId,
                     content: filterModel["content"] as String?,
-                    anomaly: filterModel["anomaly"] as bool?,
-                    malicious: filterModel["malicious"] as bool?,
+                    malicious: anomaly,
+                    timestamp: filterModel["timestamp"] as DateTimeRange?,
                     orderBy: orderBy,
                     sortDesc: descending,
                     pageSize: pageSize,
@@ -168,8 +176,14 @@ class _LogAnalysisState extends State<LogAnalysis> {
                   );
                   setState(() {
                     logdata = data;
+                    int idx = 0;
+                    for (var element in data.items) {
+                      if (element.isMalicious) {
+                        maliciousList.add(idx);
+                      }
+                      idx++;
+                    }
                   });
-                  db.close();
                   return (data.items, data.nextPageToken);
                 },
                 filters: [
@@ -181,6 +195,37 @@ class _LogAnalysisState extends State<LogAnalysis> {
                       chipFormatter: (value) => "Event ID is $value",
                       id: "event_id",
                       name: "EventID"),
+                  DropdownTableFilter(
+                    items: [
+                      const DropdownMenuItem(
+                        value: "All",
+                        child: Text("All"),
+                      ),
+                      const DropdownMenuItem(
+                        value: "Anomaly",
+                        child: Text("Anomaly"),
+                      ),
+                      const DropdownMenuItem(
+                        value: "Normal",
+                        child: Text("Normal"),
+                      ),
+                    ],
+                    chipFormatter: (value) => "$value",
+                    id: "malicious",
+                    name: "log type",
+                  ),
+                  DateRangePickerTableFilter(
+                    id: "timestamp",
+                    name: "Timestamp",
+                    enabled: true,
+                    firstDate: DateTime(2021, 1, 1),
+                    lastDate: DateTime.now(),
+                    initialValue: DateTimeRange(
+                        start: DateTime(2021, 1, 1), end: DateTime.now()),
+                    formatter: (p0) => p0.toString(),
+                    chipFormatter: (value) =>
+                        "Timestamp between ${value.start} and ${value.end}",
+                  ),
                 ],
                 fixedColumnCount: 2,
                 columns: [
@@ -229,15 +274,7 @@ class _LogAnalysisState extends State<LogAnalysis> {
   }
 
   Container _detailUI() {
-    //String xmlData = detail.toXmlString();
-
     return Container(
-      // decoration: BoxDecoration(
-      //   border: Border.all(color: Colors.black54),
-      // ),
-      // child: Center(
-      //   child: Text(detail.toXmlString()),
-      // ),
       child: LogDetailElementsViewer(xmlData: detail),
     );
   }

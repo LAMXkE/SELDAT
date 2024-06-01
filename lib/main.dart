@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:paged_datatable/l10n/generated/l10n.dart';
 import 'package:seldat/Dashboard/DashboardSkeleton.dart';
+import 'package:seldat/DatabaseManager.dart';
+import 'package:seldat/LogAnalysis.dart';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
 import 'package:seldat/Report/ReportSkeleton.dart';
@@ -46,10 +48,11 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
+  DatabaseManager db = DatabaseManager();
   late TabController tabController = TabController(length: 4, vsync: this);
   final Color _primaryColor = const Color.fromARGB(255, 0xFF, 0x61, 0x61);
   bool isMaximized = false;
-  LogFetcher logFetcher = LogFetcher();
+  late LogFetcher logFetcher;
   RegistryFetcher registryFetcher = RegistryFetcher();
   bool scanned = false;
 
@@ -61,6 +64,8 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
 
   @override
   void initState() {
+    db.open();
+    logFetcher = LogFetcher(db);
     super.initState();
     logFetcher.setAddCount(addEventLog);
     registryFetcher.setAddCount(addRegistry);
@@ -241,6 +246,11 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                                 addJumplist();
                               },
                               child: const Text("Add Jumplist")),
+                          ElevatedButton(
+                              onPressed: () {
+                                logFetcher.runAIModelPredict();
+                              },
+                              child: const Text("Run AI Model")),
                         ],
                       ),
                     ),
