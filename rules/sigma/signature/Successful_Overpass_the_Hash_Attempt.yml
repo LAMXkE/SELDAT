@@ -1,0 +1,18 @@
+- title: Successful_Overpass_the_Hash_Attempt
+  id: 04cb4d7e-1c20-4185-a57d-e7e426b7d05d
+  status: experimental
+  description: |
+    Detects successful logon with logon type 9 (NewCredentials) which matches the Overpass the Hash behavior of e.g Mimikatz's sekurlsa::pth module.
+  references:
+    - https://cyberwardog.blogspot.de/2017/04/chronicles-of-threat-hunter-hunting-for.html
+  author: Roberto Rodriguez (source), Dominik Schaudel (rule)
+  date: 2018-02-12
+  logsource:
+    category: Security
+    product: Security
+  detection:
+    selection:
+      EventID: '4624'
+      Data.LogonType: '9'
+      Data.LogonProcessName: seclogo
+      Data.AuthenticationPackageName: Negotiate

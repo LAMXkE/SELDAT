@@ -1,0 +1,18 @@
+- title: Mimikatz_DC_Sync
+  id: 02f8ed94-34a8-4cb4-98f4-c06f7d3b2311
+  status: stable
+  description: Detects Mimikatz DC sync security events
+  references:
+    - https://twitter.com/gentilkiwi/status/1003236624925413376
+    - https://gist.github.com/gentilkiwi/dcc132457408cf11ad2061340dcb53c2
+  author: Benjamin Delpy, Florian Roth
+  date: 2018-06-03
+  logsource:
+    category: Security
+    product: Security
+  detection:
+    selection:
+      EventID: '4662'
+      Data.Properties:
+        - '*Replicating Directory Changes All*'
+        - '*1131f6ad-9c07-11d1-f79f-00c04fc2dcd2*'

@@ -1,0 +1,23 @@
+- title: Secure_Deletion_with_SDelete
+  id: 8f6e79f7-34a9-45a3-9d97-74e06c35078d
+  status: experimental
+  description: |
+    Detects renaming of file while deletion with SDelete tool
+  references:
+    - https://jpcertcc.github.io/ToolAnalysisResultSheet
+    - https://www.jpcert.or.jp/english/pub/sr/ir_research.html
+    - https://technet.microsoft.com/en-us/en-en/sysinternals/sdelete.aspx
+  author: Thomas Patzke
+  date: 2019-10-22
+  logsource:
+    category: Security
+    product: Security
+  detection:
+    selection:
+      EventID:
+        - '4656'
+        - '4663'
+        - '4658'
+      Data.ObjectName:
+        - '*.AAA'
+        - '*.ZZZ'

@@ -1,0 +1,16 @@
+- title: Weak_Encryption_Enabled_and_Kerberoast
+  id: acafe0c0-9c2e-4761-a72e-0bdc5e617e77
+  status: experimental
+  description: |
+    Detects scenario where weak encryption is enabled for a user profile which could be used for hash/password cracking.
+  references:
+    - https://adsecurity.org/?p=2053
+    - https://www.harmj0y.net/blog/activedirectory/roasting-as-reps/
+  author: '@neu5ron'
+  date: 2019-10-22
+  logsource:
+    category: Security
+    product: Security
+  detection:
+    selection:
+      EventID: '4738'

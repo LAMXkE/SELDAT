@@ -1,0 +1,24 @@
+- title: Account_Tampering___Suspicious_Failed_Logon_Reasons
+  id: f7b9b01c-f6c3-4bb2-bcad-cfc001e4770b
+  status: experimental
+  description: |
+    This method uses uncommon error codes on failed logons to determine suspicious activity and tampering with accounts that have been disabled or somehow restricted.
+  references:
+    - https://twitter.com/SBousseaden/status/1101431884540710913
+  author: Florian Roth
+  date: 2019-10-22
+  logsource:
+    category: Security
+    product: Security
+  detection:
+    selection:
+      EventID:
+        - '4625'
+        - '4776'
+      Data.Status:
+        - '0xC0000072'
+        - '0xC000006F'
+        - '0xC0000070'
+        - '0xC0000413'
+        - '0xC000018C'
+        - '0xC000015B'

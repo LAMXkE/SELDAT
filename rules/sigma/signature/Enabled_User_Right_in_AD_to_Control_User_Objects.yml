@@ -1,0 +1,15 @@
+- title: Enabled_User_Right_in_AD_to_Control_User_Objects
+  id: 75ddcb52-26aa-46e1-8999-133d7405d5d4
+  status: experimental
+  description: |
+    Detects scenario where if a user is assigned the SeEnableDelegationPrivilege right in Active Directory it would allow control of other AD user objects.
+  references:
+    - https://www.harmj0y.net/blog/activedirectory/the-most-dangerous-user-right-you-probably-have-never-heard-of/
+  author: '@neu5ron'
+  date: 2019-10-22
+  logsource:
+    category: Security
+    product: Security
+  detection:
+    selection:
+      EventID: '4704'
