@@ -51,29 +51,21 @@ class _RegistryUIState extends State<RegistryUI>
     return const Row(
       children: [
         Expanded(
+          // RegistryFolderViewer() 위젯의 높이를 건드리지 않고 화면을 분할하기 위해 Expanded 위젯 사용
           child: Align(
-            alignment: Alignment.topCenter, // Align the child to the top
+            alignment: Alignment.topCenter,
             child: RegistryFolderViewer(),
           ),
         ),
         Expanded(
           child: Center(
-            // Use Center widget to center the text
             child: Text('Empty Registry Data'),
           ),
         ),
       ],
     );
 
-    //   const FractionallySizedBox(
-    //     widthFactor: 0.5, // Use 50% of the parent widget's width
-    //     child: Align(
-    //   alignment: Alignment.centerLeft, // Align the child to the left
-    //   child: const RegistryFolderViewer(),
-    // ),
-    //   );
-
-    // Column(
+    // Column( // 이전 코드
     //   children: [
     //     Row(children: [
     //       Column(
@@ -81,11 +73,11 @@ class _RegistryUIState extends State<RegistryUI>
     //           SizedBox(
     //             height: 400,
     //             child: RegistryFolderViewer(),
-    //             // RegistryDirectory(
-    //             //   directory: widget.registryFetcher.getRegistry(),
-    //             //   selectReg: setSelected,
-    //             //   selectIdx: setSelectedIdx,
-    //             // )
+    //             RegistryDirectory(
+    //               directory: widget.registryFetcher.getRegistry(),
+    //               selectReg: setSelected,
+    //               selectIdx: setSelectedIdx,
+    //             )
     //           ),
     //           SizedBox(
     //             height: 40,
