@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:seldat/Registry/RegistryDirectory.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
+import 'package:seldat/Registry/RegistryFolder.dart';
 import 'package:win32/win32.dart';
 import 'package:win32_registry/win32_registry.dart';
 
@@ -47,26 +48,54 @@ class _RegistryUIState extends State<RegistryUI>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Column(
+    return const Row(
       children: [
-        Row(children: [
-          Column(
-            children: [
-              SizedBox(
-                  height: 400,
-                  child: RegistryDirectory(
-                      directory: widget.registryFetcher.getRegistry(),
-                      selectReg: setSelected,
-                      selectIdx: setSelectedIdx)),
-              const SizedBox(
-                height: 40,
-                width: 300,
-              ),
-              const Text("Registry data place holder")
-            ],
+        Expanded(
+          child: Align(
+            alignment: Alignment.topCenter, // Align the child to the top
+            child: RegistryFolderViewer(),
           ),
-        ]),
+        ),
+        Expanded(
+          child: Center(
+            // Use Center widget to center the text
+            child: Text('Empty Registry Data'),
+          ),
+        ),
       ],
     );
+
+    //   const FractionallySizedBox(
+    //     widthFactor: 0.5, // Use 50% of the parent widget's width
+    //     child: Align(
+    //   alignment: Alignment.centerLeft, // Align the child to the left
+    //   child: const RegistryFolderViewer(),
+    // ),
+    //   );
+
+    // Column(
+    //   children: [
+    //     Row(children: [
+    //       Column(
+    //         children: [
+    //           SizedBox(
+    //             height: 400,
+    //             child: RegistryFolderViewer(),
+    //             // RegistryDirectory(
+    //             //   directory: widget.registryFetcher.getRegistry(),
+    //             //   selectReg: setSelected,
+    //             //   selectIdx: setSelectedIdx,
+    //             // )
+    //           ),
+    //           SizedBox(
+    //             height: 40,
+    //             width: 300,
+    //           ),
+    //           Text("Registry data place holder")
+    //         ],
+    //       ),
+    //     ]),
+    //   ],
+    // );
   }
 }

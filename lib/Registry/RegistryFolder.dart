@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:collection';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'dart:io';
-
 import 'dart:convert';
 import 'package:win32/win32.dart';
 import 'dart:ffi';
@@ -16,121 +13,231 @@ import 'package:path/path.dart';
 import 'package:win32_registry/win32_registry.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-class RegistryFolderViewerOfHkeyClassesRoot extends StatefulWidget {
-  const RegistryFolderViewerOfHkeyClassesRoot({super.key});
+class RegistryMapping {
+  final String registryName;
+  final RegistryHive registryHive;
+  final int registryKey;
 
-  @override
-  _RegistryFolderViewerOfHkeyClassesRootState createState() =>
-      _RegistryFolderViewerOfHkeyClassesRootState();
+  RegistryMapping(this.registryName, this.registryHive, this.registryKey);
 }
 
-class RegistryFolderViewerOfHkeyCurrentUser extends StatefulWidget {
-  const RegistryFolderViewerOfHkeyCurrentUser({super.key});
+class RegistryFolderViewer extends StatefulWidget {
+  const RegistryFolderViewer({super.key});
 
   @override
-  _RegistryFolderViewerOfHkeyCurrentUserState createState() =>
-      _RegistryFolderViewerOfHkeyCurrentUserState();
+  _RegistryFolderViewerState createState() => _RegistryFolderViewerState();
 }
 
-class RegistryFolderViewerOfHkeyLocalMachine extends StatefulWidget {
-  const RegistryFolderViewerOfHkeyLocalMachine({super.key});
-
-  @override
-  _RegistryFolderViewerOfHkeyLocalMachineState createState() =>
-      _RegistryFolderViewerOfHkeyLocalMachineState();
-}
-
-class RegistryFolderViewerOfHkeyUsers extends StatefulWidget {
-  const RegistryFolderViewerOfHkeyUsers({super.key});
-
-  @override
-  _RegistryFolderViewerOfHkeyUsersState createState() =>
-      _RegistryFolderViewerOfHkeyUsersState();
-}
-
-class RegistryFolderViewerOfHkeyCurrentConfig extends StatefulWidget {
-  const RegistryFolderViewerOfHkeyCurrentConfig({super.key});
-
-  @override
-  _RegistryFolderViewerOfHkeyCurrentConfigState createState() =>
-      _RegistryFolderViewerOfHkeyCurrentConfigState();
-}
-
-class _RegistryFolderViewerOfHkeyClassesRootState
-    extends State<RegistryFolderViewerOfHkeyClassesRoot> {
+class _RegistryFolderViewerState extends State<RegistryFolderViewer> {
   Future<List<Map<String, dynamic>>>? _futureRegistryValues;
 
+  // @override
+  // bool get wantKeepAlive => true; // Keep the widget's state
+
+  bool _isDataFetched = false;
+
   @override
-  void initState() {
-    super.initState();
-    _futureRegistryValues = fetchRegistryValue();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isDataFetched) {
+      _futureRegistryValues = fetchAllRegistryData(); // Call the function here
+      _isDataFetched = true;
+    }
   }
 
-  Future<List<Map<String, dynamic>>> fetchRegistryValue() async {
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _futureRegistryValues = fetchAllRegistryData();
+  // }
+
+  // static Future<File> writeFileAsString({String? data, String? path}) async {
+  //   final file =
+  //       File(path ?? 'cache\\tmp.txt'); // Use 'File' instead of '_localFile'
+  //   return file.writeAsString(data ?? '');
+  // }
+  //   List<Map<String, dynamic>> registryValues = await _futureRegistryValues!;
+  //   // String jsonString = jsonEncode(registryValues); // 내 pc에 json파일로 저장
+  //   // await writeFileAsString(
+  //   //     data: jsonString, path: 'D:\\test\\test.json'); // Use 'await' here
+  //   return registryValues;
+  // }
+
+  Future<List<Map<String, dynamic>>> fetchAllRegistryData() async {
     if (_futureRegistryValues != null) {
       return _futureRegistryValues!;
     }
-    const key = RegistryKey(HKEY_CLASSES_ROOT);
-    var futures = <Future<List<Map<String, dynamic>>>>[];
-    try {
-      for (var subkey in key.subkeyNames) {
-        futures.add(fetchRegistryValues(subkey));
+    var registryNames = [
+      'HKEY_CLASSES_ROOT',
+      'HKEY_CURRENT_USER',
+      'HKEY_LOCAL_MACHINE',
+      'HKEY_USERS',
+      'HKEY_CURRENT_CONFIG',
+    ];
+    var futures = registryNames.map(fetchRegistryData).toList();
+    return await Future.wait(futures);
+  }
+
+  Future<Map<String, dynamic>> fetchRegistryData(String registryName) async {
+    List<RegistryMapping> mappings = [
+      RegistryMapping(
+          'HKEY_CLASSES_ROOT', RegistryHive.classesRoot, HKEY_CLASSES_ROOT),
+      RegistryMapping(
+          'HKEY_CURRENT_USER', RegistryHive.currentUser, HKEY_CURRENT_USER),
+      RegistryMapping(
+          'HKEY_LOCAL_MACHINE', RegistryHive.localMachine, HKEY_LOCAL_MACHINE),
+      RegistryMapping('HKEY_USERS', RegistryHive.allUsers, HKEY_USERS),
+      RegistryMapping('HKEY_CURRENT_CONFIG', RegistryHive.currentConfig,
+          HKEY_CURRENT_CONFIG),
+    ];
+
+    for (var mapping in mappings) {
+      if (registryName == mapping.registryName) {
+        print("current registryName : ${mapping.registryHive.name}");
+        var key = RegistryKey(mapping.registryKey);
+        List<Map<String, dynamic>> rootValues = [];
+        List<Map<String, dynamic>> values = [
+          {
+            'name': '(Default)',
+            'type': 'REG_SZ',
+            'data': '(No Data)',
+          }
+        ];
+        if (key.values.isNotEmpty) {
+          for (var value in key.values) {
+            rootValues.add({
+              'name': value.name,
+              'type': value.type.win32Type,
+              'data': value.data,
+            });
+          }
+          values = rootValues;
+        }
+        var futures = <Future<List<Map<String, dynamic>>>>[];
+        for (var subkey in key.subkeyNames) {
+          futures.add(fetchRegistryValues(mapping.registryHive, subkey)
+              .then((value) => [value]));
+        }
+        var results = await Future.wait(futures);
+
+        key.close();
+        return {
+          'registryName': mapping.registryName,
+          'values': {
+            'directory': mapping.registryName,
+            'value': values,
+          },
+          'subkeys': results.expand((x) => x).toList(),
+        };
       }
-      var results = await Future.wait(futures);
-      _futureRegistryValues = Future.value(results.expand((x) => x).toList());
-    } finally {
-      key.close();
     }
-    return _futureRegistryValues!;
+
+    return {
+      // 예외처리
+      'registryName': registryName,
+      'values': {
+        'directory': registryName,
+        'value': [
+          {
+            'name': '(Default)',
+            'type': 'REG_SZ',
+            'data': '(No Data)',
+          }
+        ],
+      },
+      'subkeys': [],
+    };
+  }
+
+  Future<Map<String, dynamic>> fetchRegistryValues(
+      RegistryHive key, String path) async {
+    try {
+      final regkey = Registry.openPath(key, path: path);
+
+      List<Map<String, dynamic>> subkeys = [];
+      for (var subkey in regkey.subkeyNames) {
+        try {
+          subkeys.add(await fetchRegistryValues(key, '$path\\$subkey'));
+        } catch (e) {
+          if (e is WindowsException) {
+            print('$key에서 WindowsException 발생: ${e.message}');
+            continue;
+          } else {
+            rethrow;
+          }
+        }
+      }
+      List<Map<String, dynamic>> values = [];
+      if (regkey.values.isNotEmpty) {
+        for (var reg in regkey.values) {
+          values.add({
+            'name': reg.name != '' ? reg.name.toString() : '(Default)',
+            'type': reg.type.win32Type != null
+                ? reg.type.win32Type.toString()
+                : 'Default type',
+            'data': reg.data != null ? reg.data.toString() : '(No Data)',
+          });
+        }
+      } else {
+        values.add({
+          'name': '(Default)',
+          'type': 'REG_SZ',
+          'data': '(No Data)',
+        });
+      }
+      return {
+        'registryName': path.split('\\').last,
+        'values': {
+          'directory': '$key\\$path',
+          'value': values,
+        },
+        'subkeys': subkeys,
+      };
+    } on WindowsException catch (e) {
+      print('$key에서 WindowsException 발생: ${e.message}');
+      return {
+        'registryName': path.split('\\').last,
+        'values': {
+          'directory': '$key\\$path',
+          'value': [
+            {
+              'name': '(Default)',
+              'type': 'REG_SZ',
+              'data': '(No Data)',
+            }
+          ],
+        },
+        'subkeys': [],
+      };
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: ListView.builder(
-          itemCount: 1,
-          itemBuilder: (context, index) {
-            return ExpansionTile(
-              title: const Text('HKEY_CLASSES_ROOT'),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(15.0, 1.0, 1.0, 1),
-                  child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: _futureRegistryValues,
-                    builder: (BuildContext context,
-                        AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return buildErrorWidget(snapshot.error);
-                      } else {
-                        return Container(
-                          constraints: const BoxConstraints(maxHeight: 100000),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: snapshot.data?.length ?? 0,
-                            itemBuilder: (context, index) {
-                              return buildRegistryTile(snapshot.data![index]);
-                            },
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
+    //super.build(context);
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _futureRegistryValues,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          return buildErrorWidget(snapshot.error);
+        } else {
+          return SingleChildScrollView(
+            child: ListView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: snapshot.data!.map<Widget>(buildRegistryTile).toList(),
+            ),
+          );
+        }
+      },
     );
   }
 
   Widget buildRegistryTile(Map<String, dynamic> registry) {
     return ExpansionTile(
-      title: Text(registry['registryName']),
+      title: Text('ㄴ ${registry['registryName']}'), // ㄴ RegistryName
       children: <Widget>[
         ...buildRegistryValues(registry['values']).map((widget) {
           return Padding(
@@ -152,8 +259,8 @@ class _RegistryFolderViewerOfHkeyClassesRootState
     List<Widget> widgets = [];
     widgets.add(buildListTile('Directory', values['directory']));
     for (var value in values['value']) {
-      widgets.add(buildListTile("Value",
-          'Name :  ${value['name'].toString()}  |  Type :  ${value['type'].toString()}  |  Data :  ${value['data'].toString()}'));
+      widgets.add(buildListTile("Name :  ${value['name'].toString()}",
+          'Type :  ${value['type'].toString()}  |  Data :  ${value['data'].toString()}'));
     }
     return widgets;
   }
@@ -175,825 +282,12 @@ class _RegistryFolderViewerOfHkeyClassesRootState
             child: const Text('Retry'),
             onPressed: () {
               setState(() {
-                _futureRegistryValues = fetchRegistryValue();
+                _futureRegistryValues = fetchAllRegistryData();
               });
             },
           ),
         ],
       ),
     );
-  }
-
-  Future<List<Map<String, dynamic>>> fetchRegistryValues(String path) async {
-    try {
-      final regkey = Registry.openPath(RegistryHive.classesRoot, path: path);
-      List<Map<String, dynamic>> subkeys = [];
-      for (var subkey in regkey.subkeyNames) {
-        try {
-          subkeys.addAll(await fetchRegistryValues('$path\\$subkey'));
-        } catch (e) {
-          if (e is WindowsException) {
-            print('WindowsException 발생: ${e.message}');
-            continue;
-          } else {
-            rethrow;
-          }
-        }
-      }
-      List<Map<String, dynamic>> values = [];
-      if (regkey.values.isNotEmpty) {
-        for (var reg in regkey.values) {
-          values.add({
-            'name': reg.name != '' ? reg.name.toString() : 'Default',
-            'type': reg.type.win32Type != null
-                ? reg.type.win32Type.toString()
-                : 'Default type',
-            'data': reg.data != null ? reg.data.toString() : '',
-          });
-        }
-      } else {
-        values.add({
-          'name': 'Default',
-          'type': 'REG_SZ',
-          'data': '',
-        });
-      }
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_CLASSES_ROOT\\$path',
-            'value': values,
-          },
-          'subkeys': subkeys,
-        }
-      ];
-    } on WindowsException catch (e) {
-      print('WindowsException 발생: ${e.message}');
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_CLASSES_ROOT\\$path',
-            'value': [],
-          },
-          'subkeys': [],
-        }
-      ];
-    }
-  }
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-class _RegistryFolderViewerOfHkeyCurrentUserState
-    extends State<RegistryFolderViewerOfHkeyCurrentUser> {
-  Future<List<Map<String, dynamic>>>? _futureRegistryValues;
-
-  @override
-  void initState() {
-    super.initState();
-    _futureRegistryValues = fetchRegistryValue();
-  }
-
-  Future<List<Map<String, dynamic>>> fetchRegistryValue() async {
-    if (_futureRegistryValues != null) {
-      return _futureRegistryValues!;
-    }
-    const key = RegistryKey(HKEY_CURRENT_USER);
-    var futures = <Future<List<Map<String, dynamic>>>>[];
-    try {
-      for (var subkey in key.subkeyNames) {
-        futures.add(fetchRegistryValues(subkey));
-      }
-      var results = await Future.wait(futures);
-      _futureRegistryValues = Future.value(results.expand((x) => x).toList());
-    } finally {
-      key.close();
-    }
-    return _futureRegistryValues!;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: ListView.builder(
-          itemCount: 1,
-          itemBuilder: (context, index) {
-            return ExpansionTile(
-              title: const Text('HKEY_CURRENT_USER'),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(15.0, 1.0, 1.0, 1),
-                  child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: _futureRegistryValues,
-                    builder: (BuildContext context,
-                        AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return buildErrorWidget(snapshot.error);
-                      } else {
-                        return Container(
-                          constraints: const BoxConstraints(maxHeight: 100000),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: snapshot.data?.length ?? 0,
-                            itemBuilder: (context, index) {
-                              return buildRegistryTile(snapshot.data![index]);
-                            },
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget buildRegistryTile(Map<String, dynamic> registry) {
-    return ExpansionTile(
-      title: Text(registry['registryName']),
-      children: <Widget>[
-        ...buildRegistryValues(registry['values']).map((widget) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(18.0, 1.0, 1.0, 1.0),
-            child: widget,
-          );
-        }),
-        ...registry['subkeys'].map<Widget>((subkey) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(30.0, 1.0, 1.0, 1.0),
-            child: buildRegistryTile(subkey),
-          );
-        }).toList(),
-      ],
-    );
-  }
-
-  List<Widget> buildRegistryValues(Map<String, dynamic> values) {
-    List<Widget> widgets = [];
-    widgets.add(buildListTile('Directory', values['directory']));
-    for (var value in values['value']) {
-      widgets.add(buildListTile("Value",
-          'Name :  ${value['name'].toString()}  |  Type :  ${value['type'].toString()}  |  Data :  ${value['data'].toString()}'));
-    }
-    return widgets;
-  }
-
-  ListTile buildListTile(String title, String subtitle) {
-    return ListTile(
-      title: Text(title),
-      subtitle: Text(subtitle),
-    );
-  }
-
-  Widget buildErrorWidget(dynamic error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text('Error: $error'),
-          ElevatedButton(
-            child: const Text('Retry'),
-            onPressed: () {
-              setState(() {
-                _futureRegistryValues = fetchRegistryValue();
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> fetchRegistryValues(String path) async {
-    try {
-      final regkey = Registry.openPath(RegistryHive.currentUser, path: path);
-      List<Map<String, dynamic>> subkeys = [];
-      for (var subkey in regkey.subkeyNames) {
-        try {
-          subkeys.addAll(await fetchRegistryValues('$path\\$subkey'));
-        } catch (e) {
-          if (e is WindowsException) {
-            print('WindowsException 발생: ${e.message}');
-            continue;
-          } else {
-            rethrow;
-          }
-        }
-      }
-      List<Map<String, dynamic>> values = [];
-      if (regkey.values.isNotEmpty) {
-        for (var reg in regkey.values) {
-          values.add({
-            'name': reg.name != '' ? reg.name.toString() : 'Default',
-            'type': reg.type.win32Type != null
-                ? reg.type.win32Type.toString()
-                : 'Default type',
-            'data': reg.data != null ? reg.data.toString() : '',
-          });
-        }
-      } else {
-        values.add({
-          'name': 'Default',
-          'type': 'REG_SZ',
-          'data': '',
-        });
-      }
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_CURRENT_USER\\$path',
-            'value': values,
-          },
-          'subkeys': subkeys,
-        }
-      ];
-    } on WindowsException catch (e) {
-      print('WindowsException 발생: ${e.message}');
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_CURRENT_USER\\$path',
-            'value': [],
-          },
-          'subkeys': [],
-        }
-      ];
-    }
-  }
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-class _RegistryFolderViewerOfHkeyLocalMachineState
-    extends State<RegistryFolderViewerOfHkeyLocalMachine> {
-  Future<List<Map<String, dynamic>>>? _futureRegistryValues;
-
-  @override
-  void initState() {
-    super.initState();
-    _futureRegistryValues = fetchRegistryValue();
-  }
-
-  Future<List<Map<String, dynamic>>> fetchRegistryValue() async {
-    if (_futureRegistryValues != null) {
-      return _futureRegistryValues!;
-    }
-    const key = RegistryKey(HKEY_LOCAL_MACHINE);
-    var futures = <Future<List<Map<String, dynamic>>>>[];
-    try {
-      for (var subkey in key.subkeyNames) {
-        futures.add(fetchRegistryValues(subkey));
-      }
-      var results = await Future.wait(futures);
-      _futureRegistryValues = Future.value(results.expand((x) => x).toList());
-    } finally {
-      key.close();
-    }
-    return _futureRegistryValues!;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: ListView.builder(
-          itemCount: 1,
-          itemBuilder: (context, index) {
-            return ExpansionTile(
-              title: const Text('HKEY_LOCAL_MACHINE'),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(15.0, 1.0, 1.0, 1.0),
-                  child: FutureBuilder<List<Map<String, dynamic>>>(
-                    future: _futureRegistryValues,
-                    builder: (BuildContext context,
-                        AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return buildErrorWidget(snapshot.error);
-                      } else {
-                        return Container(
-                          constraints: const BoxConstraints(maxHeight: 100000),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: snapshot.data?.length ?? 0,
-                            itemBuilder: (context, index) {
-                              return buildRegistryTile(snapshot.data![index]);
-                            },
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget buildRegistryTile(Map<String, dynamic> registry) {
-    return ExpansionTile(
-      title: Text(registry['registryName']),
-      children: <Widget>[
-        ...buildRegistryValues(registry['values']).map((widget) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(18.0, 1.0, 1.0, 1.0),
-            child: widget,
-          );
-        }),
-        ...registry['subkeys'].map<Widget>((subkey) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(30.0, 1.0, 1.0, 1.0),
-            child: buildRegistryTile(subkey),
-          );
-        }).toList(),
-      ],
-    );
-  }
-
-  List<Widget> buildRegistryValues(Map<String, dynamic> values) {
-    List<Widget> widgets = [];
-    widgets.add(buildListTile('Directory', values['directory']));
-    for (var value in values['value']) {
-      widgets.add(buildListTile("Value",
-          'Name :  ${value['name'].toString()}  |  Type :  ${value['type'].toString()}  |  Data :  ${value['data'].toString()}'));
-    }
-    return widgets;
-  }
-
-  ListTile buildListTile(String title, String subtitle) {
-    return ListTile(
-      title: Text(title),
-      subtitle: Text(subtitle),
-    );
-  }
-
-  Widget buildErrorWidget(dynamic error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text('Error: $error'),
-          ElevatedButton(
-            child: const Text('Retry'),
-            onPressed: () {
-              setState(() {
-                _futureRegistryValues = fetchRegistryValue();
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> fetchRegistryValues(String path) async {
-    try {
-      final regkey = Registry.openPath(RegistryHive.localMachine, path: path);
-      List<Map<String, dynamic>> subkeys = [];
-      for (var subkey in regkey.subkeyNames) {
-        try {
-          subkeys.addAll(await fetchRegistryValues('$path\\$subkey'));
-        } catch (e) {
-          if (e is WindowsException) {
-            print('WindowsException 발생: ${e.message}');
-            continue;
-          } else {
-            rethrow;
-          }
-        }
-      }
-      List<Map<String, dynamic>> values = [];
-      if (regkey.values.isNotEmpty) {
-        for (var reg in regkey.values) {
-          values.add({
-            'name': reg.name != '' ? reg.name.toString() : 'Default',
-            'type': reg.type.win32Type != null
-                ? reg.type.win32Type.toString()
-                : 'Default type',
-            'data': reg.data != null ? reg.data.toString() : '',
-          });
-        }
-      } else {
-        values.add({
-          'name': 'Default',
-          'type': 'REG_SZ',
-          'data': '',
-        });
-      }
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_LOCAL_MACHINE\\$path',
-            'value': values,
-          },
-          'subkeys': subkeys,
-        }
-      ];
-    } on WindowsException catch (e) {
-      print('WindowsException 발생: ${e.message}');
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_LOCAL_MACHINE\\$path',
-            'value': [],
-          },
-          'subkeys': [],
-        }
-      ];
-    }
-  }
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-class _RegistryFolderViewerOfHkeyUsersState
-    extends State<RegistryFolderViewerOfHkeyUsers> {
-  Future<List<Map<String, dynamic>>>? _futureRegistryValues;
-
-  @override
-  void initState() {
-    super.initState();
-    _futureRegistryValues = fetchRegistryValue();
-  }
-
-  Future<List<Map<String, dynamic>>> fetchRegistryValue() async {
-    if (_futureRegistryValues != null) {
-      return _futureRegistryValues!;
-    }
-    const key = RegistryKey(HKEY_USERS);
-    var futures = <Future<List<Map<String, dynamic>>>>[];
-    try {
-      for (var subkey in key.subkeyNames) {
-        futures.add(fetchRegistryValues(subkey));
-      }
-      var results = await Future.wait(futures);
-      _futureRegistryValues = Future.value(results.expand((x) => x).toList());
-    } finally {
-      key.close();
-    }
-    return _futureRegistryValues!;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: ListView.builder(
-          itemCount: 1,
-          itemBuilder: (context, index) {
-            return ExpansionTile(
-              title: const Text('HKEY_USERS'),
-              children: [
-                FutureBuilder<List<Map<String, dynamic>>>(
-                  future: _futureRegistryValues,
-                  builder: (BuildContext context,
-                      AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return buildErrorWidget(snapshot.error);
-                    } else {
-                      return Container(
-                        constraints: const BoxConstraints(maxHeight: 100000),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: snapshot.data?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            return buildRegistryTile(snapshot.data![index]);
-                          },
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget buildRegistryTile(Map<String, dynamic> registry) {
-    return ExpansionTile(
-      title: Text(registry['registryName']),
-      children: <Widget>[
-        ...buildRegistryValues(registry['values']).map((widget) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(18.0, 1.0, 1.0, 1.0),
-            child: widget,
-          );
-        }),
-        ...registry['subkeys'].map<Widget>((subkey) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(30.0, 1.0, 1.0, 1.0),
-            child: buildRegistryTile(subkey),
-          );
-        }).toList(),
-      ],
-    );
-  }
-
-  List<Widget> buildRegistryValues(Map<String, dynamic> values) {
-    List<Widget> widgets = [];
-    widgets.add(buildListTile('Directory', values['directory']));
-    for (var value in values['value']) {
-      widgets.add(buildListTile("Value",
-          'Name :  ${value['name'].toString()}  |  Type :  ${value['type'].toString()}  |  Data :  ${value['data'].toString()}'));
-    }
-    return widgets;
-  }
-
-  ListTile buildListTile(String title, String subtitle) {
-    return ListTile(
-      title: Text(title),
-      subtitle: Text(subtitle),
-    );
-  }
-
-  Widget buildErrorWidget(dynamic error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text('Error: $error'),
-          ElevatedButton(
-            child: const Text('Retry'),
-            onPressed: () {
-              setState(() {
-                _futureRegistryValues = fetchRegistryValue();
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> fetchRegistryValues(String path) async {
-    try {
-      final regkey = Registry.openPath(RegistryHive.allUsers, path: path);
-      List<Map<String, dynamic>> subkeys = [];
-      for (var subkey in regkey.subkeyNames) {
-        try {
-          subkeys.addAll(await fetchRegistryValues('$path\\$subkey'));
-        } catch (e) {
-          if (e is WindowsException) {
-            print('WindowsException 발생: ${e.message}');
-            continue;
-          } else {
-            rethrow;
-          }
-        }
-      }
-      List<Map<String, dynamic>> values = [];
-      if (regkey.values.isNotEmpty) {
-        for (var reg in regkey.values) {
-          values.add({
-            'name': reg.name != '' ? reg.name.toString() : 'Default',
-            'type': reg.type.win32Type != null
-                ? reg.type.win32Type.toString()
-                : 'Default type',
-            'data': reg.data != null ? reg.data.toString() : '',
-          });
-        }
-      } else {
-        values.add({
-          'name': 'Default',
-          'type': 'REG_SZ',
-          'data': '',
-        });
-      }
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_USERS\\$path',
-            'value': values,
-          },
-          'subkeys': subkeys,
-        }
-      ];
-    } on WindowsException catch (e) {
-      print('WindowsException 발생: ${e.message}');
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_USERS\\$path',
-            'value': [],
-          },
-          'subkeys': [],
-        }
-      ];
-    }
-  }
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-class _RegistryFolderViewerOfHkeyCurrentConfigState
-    extends State<RegistryFolderViewerOfHkeyCurrentConfig> {
-  Future<List<Map<String, dynamic>>>? _futureRegistryValues;
-
-  @override
-  void initState() {
-    super.initState();
-    _futureRegistryValues = fetchRegistryValue();
-  }
-
-  Future<List<Map<String, dynamic>>> fetchRegistryValue() async {
-    if (_futureRegistryValues != null) {
-      return _futureRegistryValues!;
-    }
-    const key = RegistryKey(HKEY_CURRENT_CONFIG);
-    var futures = <Future<List<Map<String, dynamic>>>>[];
-    try {
-      for (var subkey in key.subkeyNames) {
-        futures.add(fetchRegistryValues(subkey));
-      }
-      var results = await Future.wait(futures);
-      _futureRegistryValues = Future.value(results.expand((x) => x).toList());
-    } finally {
-      key.close();
-    }
-    return _futureRegistryValues!;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: ListView.builder(
-          itemCount: 1,
-          itemBuilder: (context, index) {
-            return ExpansionTile(
-              title: const Text('HKEY_CURRENT_CONFIG'),
-              children: [
-                FutureBuilder<List<Map<String, dynamic>>>(
-                  future: _futureRegistryValues,
-                  builder: (BuildContext context,
-                      AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (snapshot.hasError) {
-                      return buildErrorWidget(snapshot.error);
-                    } else {
-                      return Container(
-                        constraints: const BoxConstraints(maxHeight: 100000),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: snapshot.data?.length ?? 0,
-                          itemBuilder: (context, index) {
-                            return buildRegistryTile(snapshot.data![index]);
-                          },
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget buildRegistryTile(Map<String, dynamic> registry) {
-    return ExpansionTile(
-      title: Text(registry['registryName']),
-      children: <Widget>[
-        ...buildRegistryValues(registry['values']).map((widget) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(18.0, 1.0, 1.0, 1.0),
-            child: widget,
-          );
-        }),
-        ...registry['subkeys'].map<Widget>((subkey) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(30.0, 1.0, 1.0, 1.0),
-            child: buildRegistryTile(subkey),
-          );
-        }).toList(),
-      ],
-    );
-  }
-
-  List<Widget> buildRegistryValues(Map<String, dynamic> values) {
-    List<Widget> widgets = [];
-    widgets.add(buildListTile('Directory', values['directory']));
-    for (var value in values['value']) {
-      widgets.add(buildListTile("Value",
-          'Name :  ${value['name'].toString()}  |  Type :  ${value['type'].toString()}  |  Data :  ${value['data'].toString()}'));
-    }
-    return widgets;
-  }
-
-  ListTile buildListTile(String title, String subtitle) {
-    return ListTile(
-      title: Text(title),
-      subtitle: Text(subtitle),
-    );
-  }
-
-  Widget buildErrorWidget(dynamic error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text('Error: $error'),
-          ElevatedButton(
-            child: const Text('Retry'),
-            onPressed: () {
-              setState(() {
-                _futureRegistryValues = fetchRegistryValue();
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> fetchRegistryValues(String path) async {
-    try {
-      final regkey = Registry.openPath(RegistryHive.currentConfig, path: path);
-      List<Map<String, dynamic>> subkeys = [];
-      for (var subkey in regkey.subkeyNames) {
-        try {
-          subkeys.addAll(await fetchRegistryValues('$path\\$subkey'));
-        } catch (e) {
-          if (e is WindowsException) {
-            print('WindowsException 발생: ${e.message}');
-            continue;
-          } else {
-            rethrow;
-          }
-        }
-      }
-      List<Map<String, dynamic>> values = [];
-      if (regkey.values.isNotEmpty) {
-        for (var reg in regkey.values) {
-          values.add({
-            'name': reg.name != '' ? reg.name.toString() : 'Default',
-            'type': reg.type.win32Type != null
-                ? reg.type.win32Type.toString()
-                : 'Default type',
-            'data': reg.data != null ? reg.data.toString() : '',
-          });
-        }
-      } else {
-        values.add({
-          'name': 'Default',
-          'type': 'REG_SZ',
-          'data': '',
-        });
-      }
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_CURRENT_CONFIG\\$path',
-            'value': values,
-          },
-          'subkeys': subkeys,
-        }
-      ];
-    } on WindowsException catch (e) {
-      print('WindowsException 발생: ${e.message}');
-      return [
-        {
-          'registryName': path.split('\\').last,
-          'values': {
-            'directory': 'HKEY_CURRENT_CONFIG\\$path',
-            'value': [],
-          },
-          'subkeys': [],
-        }
-      ];
-    }
   }
 }
