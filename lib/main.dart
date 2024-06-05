@@ -8,6 +8,7 @@ import 'package:seldat/LogAnalysis.dart';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
 import 'package:seldat/Report/ReportSkeleton.dart';
+import 'package:seldat/srum/SrumFetcher.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:seldat/Dashboard.dart';
 import 'package:seldat/Report.dart';
@@ -54,6 +55,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   bool isMaximized = false;
   late LogFetcher logFetcher;
   RegistryFetcher registryFetcher = RegistryFetcher();
+  Srumfetcher srumFetcher = Srumfetcher();
   bool scanned = false;
 
   @override
@@ -69,7 +71,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     super.initState();
     logFetcher.setAddCount(addEventLog);
     registryFetcher.setAddCount(addRegistry);
-
+    srumFetcher.setAddCount(addSRUM);
     logFetcher.loadDB().then((value) => {
           if (value)
             {
@@ -81,6 +83,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     // registryFetcher.setAddSRUM(addSRUM);
     // registryFetcher.setAddPrefetch(addPrefetch);
     // registryFetcher.setAddJumplist(addJumplist);
+    // srumFetcher.fetchSrumData();
   }
 
   void startScan() async {
@@ -110,9 +113,9 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     });
   }
 
-  void addSRUM() {
+  void addSRUM(int cnt) {
     setState(() {
-      srumCount++;
+      srumCount += cnt;
     });
   }
 

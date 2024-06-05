@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:seldat/Registry/RegistryDirectory.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
+import 'package:seldat/Registry/RegistryFolder.dart';
 import 'package:win32/win32.dart';
 import 'package:win32_registry/win32_registry.dart';
 
@@ -47,26 +48,46 @@ class _RegistryUIState extends State<RegistryUI>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Column(
+    return const Row(
       children: [
-        Row(children: [
-          Column(
-            children: [
-              SizedBox(
-                  height: 400,
-                  child: RegistryDirectory(
-                      directory: widget.registryFetcher.getRegistry(),
-                      selectReg: setSelected,
-                      selectIdx: setSelectedIdx)),
-              const SizedBox(
-                height: 40,
-                width: 300,
-              ),
-              const Text("Registry data place holder")
-            ],
+        Expanded(
+          // RegistryFolderViewer() 위젯의 높이를 건드리지 않고 화면을 분할하기 위해 Expanded 위젯 사용
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: RegistryFolderViewer(),
           ),
-        ]),
+        ),
+        Expanded(
+          child: Center(
+            child: Text('Empty Registry Data'),
+          ),
+        ),
       ],
     );
+
+    // Column( // 이전 코드
+    //   children: [
+    //     Row(children: [
+    //       Column(
+    //         children: [
+    //           SizedBox(
+    //             height: 400,
+    //             child: RegistryFolderViewer(),
+    //             RegistryDirectory(
+    //               directory: widget.registryFetcher.getRegistry(),
+    //               selectReg: setSelected,
+    //               selectIdx: setSelectedIdx,
+    //             )
+    //           ),
+    //           SizedBox(
+    //             height: 40,
+    //             width: 300,
+    //           ),
+    //           Text("Registry data place holder")
+    //         ],
+    //       ),
+    //     ]),
+    //   ],
+    // );
   }
 }
