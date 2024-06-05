@@ -1,15 +1,15 @@
 title: PowerShell_PSAttack
-  id: f0dcbde0-3da3-4e5d-a0a0-1d0db66e1a62
-  status: experimental
-  description: Detects the use of PSAttack PowerShell hack tool
-  references:
-    - https://adsecurity.org/?p=2921
-  author: Sean Metcalf (source), Florian Roth (rule)
-  date: 2019-10-22
-  logsource:
-    category: Microsoft-Windows-PowerShell/Operational
-    product: PowerShell
-  detection:
-    selection:
-      EventID: '4103'
-      Data.ScriptBlockText: '*PS ATTACK!!!*'
+id: f0dcbde0-3da3-4e5d-a0a0-1d0db66e1a62
+status: experimental
+description: Detects the use of PSAttack PowerShell hack tool
+references:
+  - https://adsecurity.org/?p=2921
+author: Sean Metcalf (source), Florian Roth (rule)
+date: 2019-10-22
+logsource:
+  category: Microsoft-Windows-PowerShell/Operational
+  product: PowerShell
+detection:
+  selection:
+    EventID: '4103'
+    Data.ScriptBlockText: '*PS ATTACK!!!*'

@@ -1,38 +1,38 @@
-- title: Detects a rundll32 that communicates with public IP addresses
-  id: 6c25ff52-1e04-4a2a-aedf-29e35f2a5113
-  status: experimental
-  description: |
-    Detects a rundll32 that communicates with public IP addresses
-  references:
-    - https://www.hybrid-analysis.com/sample/759fb4c0091a78c5ee035715afe3084686a8493f39014aea72dae36869de9ff6?environmentId=100
-  author: Florian Roth
-  date: 2017-11-04
-  logsource:
-    category: Microsoft-Windows-Sysmon/Operational
-    product: Sysmon
-  detection:
-    selection:
-      EventID: '3'
-      Data.Image: '*\rundll32.exe'
-      Data.Initiated: 'true'
-    exclude:
-      Data.DestinationIp:
-        - 10.*
-        - 192.168.*
-        - 172.16.*
-        - 172.17.*
-        - 172.18.*
-        - 172.19.*
-        - 172.20.*
-        - 172.21.*
-        - 172.22.*
-        - 172.23.*
-        - 172.24.*
-        - 172.25.*
-        - 172.26.*
-        - 172.27.*
-        - 172.28.*
-        - 172.29.*
-        - 172.30.*
-        - 172.31.*
-        - 127.*
+title: Detects a rundll32 that communicates with public IP addresses
+id: 6c25ff52-1e04-4a2a-aedf-29e35f2a5113
+status: experimental
+description: |
+  Detects a rundll32 that communicates with public IP addresses
+references:
+  - https://www.hybrid-analysis.com/sample/759fb4c0091a78c5ee035715afe3084686a8493f39014aea72dae36869de9ff6?environmentId=100
+author: Florian Roth
+date: 2017-11-04
+logsource:
+  category: Microsoft-Windows-Sysmon/Operational
+  product: Sysmon
+detection:
+  selection:
+    EventID: '3'
+    Data.Image: '*\rundll32.exe'
+    Data.Initiated: 'true'
+  exclude:
+    Data.DestinationIp:
+      - 10.*
+      - 192.168.*
+      - 172.16.*
+      - 172.17.*
+      - 172.18.*
+      - 172.19.*
+      - 172.20.*
+      - 172.21.*
+      - 172.22.*
+      - 172.23.*
+      - 172.24.*
+      - 172.25.*
+      - 172.26.*
+      - 172.27.*
+      - 172.28.*
+      - 172.29.*
+      - 172.30.*
+      - 172.31.*
+      - 127.*

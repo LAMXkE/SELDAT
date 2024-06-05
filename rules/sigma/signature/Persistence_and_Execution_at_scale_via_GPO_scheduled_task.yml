@@ -1,17 +1,17 @@
-- title: Persistence_and_Execution_at_scale_via_GPO_scheduled_task
-  id: e3080e02-6a80-47e4-bd7e-77fbcf57c748
-  status: experimental
-  description: Detect lateral movement using GPO scheduled task, ususally used to deploy ransomware at scale
-  references:
-    - https://twitter.com/menasec1/status/1106899890377052160
-  author: Samir Bousseaden
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID: '5145'
-      Data.ShareName: \\*\SYSVOL
-      Data.RelativeTargetName: '*ScheduledTasks.xml'
-      Data.Accesses: '*WriteData*'
+title: Persistence_and_Execution_at_scale_via_GPO_scheduled_task
+id: e3080e02-6a80-47e4-bd7e-77fbcf57c748
+status: experimental
+description: Detect lateral movement using GPO scheduled task, ususally used to deploy ransomware at scale
+references:
+  - https://twitter.com/menasec1/status/1106899890377052160
+author: Samir Bousseaden
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID: '5145'
+    Data.ShareName: \\*\SYSVOL
+    Data.RelativeTargetName: '*ScheduledTasks.xml'
+    Data.Accesses: '*WriteData*'

@@ -1,20 +1,20 @@
-- title: Powerview_Add_DomainObjectAcl_DCSync_AD_Extend_Right
-  id: f0f5a6f5-bc5b-4673-b77e-6d78469d0472
-  status: experimental
-  description: |
-    backdooring domain object to grant the rights associated with DCSync to a regular user or machine account using Powerview\Add-DomainObjectAcl DCSync Extended Right cmdlet, will allow to re-obtain the pwd hashes of any user/computer
-  references:
-    - https://twitter.com/menasec1/status/1111556090137903104
-    - https://www.specterops.io/assets/resources/an_ace_up_the_sleeve.pdf
-  author: Samir Bousseaden
-  date: 2019-04-03
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID: '5136'
-      Data.LDAPDisplayName: ntSecurityDescriptor
-      Data.Value:
-        - '*1131f6ad-9c07-11d1-f79f-00c04fc2dcd2*'
-        - '*1131f6aa-9c07-11d1-f79f-00c04fc2dcd2*'
+title: Powerview_Add_DomainObjectAcl_DCSync_AD_Extend_Right
+id: f0f5a6f5-bc5b-4673-b77e-6d78469d0472
+status: experimental
+description: |
+  backdooring domain object to grant the rights associated with DCSync to a regular user or machine account using Powerview\Add-DomainObjectAcl DCSync Extended Right cmdlet, will allow to re-obtain the pwd hashes of any user/computer
+references:
+  - https://twitter.com/menasec1/status/1111556090137903104
+  - https://www.specterops.io/assets/resources/an_ace_up_the_sleeve.pdf
+author: Samir Bousseaden
+date: 2019-04-03
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID: '5136'
+    Data.LDAPDisplayName: ntSecurityDescriptor
+    Data.Value:
+      - '*1131f6ad-9c07-11d1-f79f-00c04fc2dcd2*'
+      - '*1131f6aa-9c07-11d1-f79f-00c04fc2dcd2*'

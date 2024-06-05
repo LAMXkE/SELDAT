@@ -1,16 +1,16 @@
-- title: User_Added_to_Local_Administrators
-  id: 4867b3b5-3847-4f69-a48b-45b4c575b8ad
-  status: experimental
-  description: |
-    This rule triggers on user accounts that are added to the local Administrators group, which could be legitimate activity or a sign of privilege escalation activity
-  references: []
-  author: Florian Roth
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID: '4732'
-    exclusion:
-      Data.SubjectUserName: '*$'
+title: User_Added_to_Local_Administrators
+id: 4867b3b5-3847-4f69-a48b-45b4c575b8ad
+status: experimental
+description: |
+  This rule triggers on user accounts that are added to the local Administrators group, which could be legitimate activity or a sign of privilege escalation activity
+references: []
+author: Florian Roth
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID: '4732'
+  exclusion:
+    Data.SubjectUserName: '*$'

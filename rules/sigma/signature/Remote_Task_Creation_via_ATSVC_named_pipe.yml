@@ -1,18 +1,18 @@
-- title: Remote_Task_Creation_via_ATSVC_named_pipe
-  id: 89d9786f-4b4c-45b5-bc2a-8597d107ad11
-  status: experimental
-  description: |
-    Detects remote task creation via at.exe or API interacting with ATSVC namedpipe
-  references:
-    - https://blog.menasec.net/2019/03/threat-hunting-25-scheduled-tasks-for.html
-  author: Samir Bousseaden
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID: '5145'
-      Data.ShareName: \\*\IPC$
-      Data.RelativeTargetName: atsvc
-      Data.Accesses: '*WriteData*'
+title: Remote_Task_Creation_via_ATSVC_named_pipe
+id: 89d9786f-4b4c-45b5-bc2a-8597d107ad11
+status: experimental
+description: |
+  Detects remote task creation via at.exe or API interacting with ATSVC namedpipe
+references:
+  - https://blog.menasec.net/2019/03/threat-hunting-25-scheduled-tasks-for.html
+author: Samir Bousseaden
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID: '5145'
+    Data.ShareName: \\*\IPC$
+    Data.RelativeTargetName: atsvc
+    Data.Accesses: '*WriteData*'
