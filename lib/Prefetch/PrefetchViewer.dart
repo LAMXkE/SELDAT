@@ -47,34 +47,39 @@ class _PrefetchViewerContentState extends State<_PrefetchViewerContent> {
   }
 
   void updateFilter(String value) {
-    setState(() {
-      filter = value;
-      filteredList = widget.allPrefetchFile
-          .where((item) => item.values.any((v) => v.contains(filter)))
-          .toList();
-    });
+    if (mounted) {
+      setState(() {
+        filter = value;
+        filteredList = widget.allPrefetchFile
+            .where((item) => item.values.any((v) => v.contains(filter)))
+            .toList();
+      });
+    }
   }
 
   void updateSort(String key) {
-    setState(() {
-      sortKey = key;
-      sortAscending = !sortAscending;
-      filteredList.sort((a, b) {
-        var aValue = a[sortKey];
-        var bValue = b[sortKey];
-        if (aValue == null) return sortAscending ? -1 : 1;
-        if (bValue == null) return sortAscending ? 1 : -1;
-        return sortAscending
-            ? aValue.compareTo(bValue)
-            : bValue.compareTo(aValue);
+    if (mounted) {
+      setState(() {
+        sortKey = key;
+        sortAscending = !sortAscending;
+        filteredList.sort((a, b) {
+          var aValue = a[sortKey];
+          var bValue = b[sortKey];
+          if (aValue == null) return sortAscending ? -1 : 1;
+          if (bValue == null) return sortAscending ? 1 : -1;
+          return sortAscending
+              ? aValue.compareTo(bValue)
+              : bValue.compareTo(aValue);
+        });
       });
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     // Define the flex factors for each key
     final flexFactors = {
+      // 컬럼 너비 비율 조정
       'filename': 4,
       'createTime': 5,
       'modifiedTime': 5,
