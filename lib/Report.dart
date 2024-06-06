@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Registry.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
+import 'package:seldat/Prefetch/PrefetchViewer.dart';
 
 class Report extends StatefulWidget {
   final LogFetcher logFetcher;
@@ -58,7 +59,7 @@ class _ReportState extends State<Report>
                 registryFetcher: widget.registryFetcher,
               ),
               const Center(child: Text("SRUM Placeholder")),
-              const Center(child: Text("Prefetch Placeholder")),
+              PrefetchViewer(), // PrefetchViewer() 위젯 추가
             ],
           ),
         )
