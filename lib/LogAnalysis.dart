@@ -28,7 +28,8 @@ class LogAnalysis extends StatefulWidget {
   State<LogAnalysis> createState() => _LogAnalysisState();
 }
 
-class _LogAnalysisState extends State<LogAnalysis> {
+class _LogAnalysisState extends State<LogAnalysis>
+    with AutomaticKeepAliveClientMixin<LogAnalysis> {
   late List<File> eventLogFileList;
   late DatabaseManager db;
   String selectedFilename = "";
@@ -37,6 +38,10 @@ class _LogAnalysisState extends State<LogAnalysis> {
   int pageSize = 15;
   List<int> maliciousList = [];
   PaginatedList<eventLog>? logdata;
+
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   void initState() {
     db = widget.logFetcher.db;
@@ -47,6 +52,7 @@ class _LogAnalysisState extends State<LogAnalysis> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Row(
       children: [
         Flexible(

@@ -13,11 +13,15 @@ class SrumView extends StatefulWidget {
 }
 
 class _SrumViewState extends State<SrumView>
-    with SingleTickerProviderStateMixin {
+    with
+        SingleTickerProviderStateMixin,
+        AutomaticKeepAliveClientMixin<SrumView> {
   int selectedTabIndex = 0;
   late TabController srumTabController = TabController(length: 7, vsync: this);
   List<bool> loaded = List.filled(7, false);
   List<SRUM> srumData = [];
+  @override
+  bool get wantKeepAlive => true;
   @override
   void initState() {
     srumData = widget.srumfetcher.getSrumData();
@@ -25,6 +29,7 @@ class _SrumViewState extends State<SrumView>
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (srumData.isEmpty) {
       return const Center(
         child: Text("No SRUM data found"),
@@ -67,7 +72,9 @@ class _SrumViewState extends State<SrumView>
       );
     }
     SrumDataSource datasource = SrumDataSource(
-        srumData: data.where((srum) => srum.type == type).toList());
+      srumData: data.where((srum) => srum.type == type).toList(),
+    );
+
     return PaginatedDataTable2(
         headingRowDecoration: const BoxDecoration(
           color: Colors.black12,
@@ -77,8 +84,13 @@ class _SrumViewState extends State<SrumView>
         autoRowsToHeight: true,
         showFirstLastButtons: true,
         fixedLeftColumns: 2,
-        sortColumnIndex: 1,
-        sortArrowAlwaysVisible: true,
+        header: TextField(
+          onChanged: datasource.updateFilter,
+          decoration: const InputDecoration(
+            labelText: "Search",
+            suffixIcon: Icon(Icons.search),
+          ),
+        ),
         columns: srumColumns(type)
             .map((column) => DataColumn2(
                 fixedWidth: column == "Id"

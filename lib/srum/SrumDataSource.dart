@@ -4,16 +4,26 @@ import 'package:seldat/DatabaseManager.dart';
 
 class SrumDataSource extends DataTableSource {
   List<SRUM> srumData = [];
+  List<SRUM> filteredData = [];
 
-  SrumDataSource({required this.srumData});
+  SrumDataSource({required this.srumData}) {
+    filteredData = srumData;
+  }
+  void updateFilter(String filter) {
+    filteredData = srumData
+        .where((item) =>
+            item.toMap().values.any((v) => v.toString().contains(filter)))
+        .toList();
+    notifyListeners();
+  }
 
   @override
   DataRow? getRow(int index) {
-    if (index >= srumData.length) {
+    if (index >= filteredData.length) {
       return null;
     }
 
-    final row = srumData[index];
+    final row = filteredData[index];
     List<String> cells = row.full.replaceAll("`-1`", "``").split("`");
     return DataRow2.byIndex(
       index: index,
@@ -25,7 +35,7 @@ class SrumDataSource extends DataTableSource {
   bool get isRowCountApproximate => false;
 
   @override
-  int get rowCount => srumData.length;
+  int get rowCount => filteredData.length;
 
   @override
   int get selectedRowCount => 0;

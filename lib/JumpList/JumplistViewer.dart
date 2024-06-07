@@ -1,55 +1,56 @@
 import 'package:flutter/material.dart';
-import 'PrefetchFetcher.dart';
+import 'JumplistFetcher.dart';
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
-class PrefetchViewer extends StatelessWidget {
-  final Future<List<Map<String, dynamic>>> allPrefetchFile =
-      PrefetchDataParser().getAllPrefetchFile();
+class JumplistViewer extends StatelessWidget {
+  final Future<List<Map<String, dynamic>>> allJumplistFile =
+      JumpListDataParser().getAllJumpListFile();
 
-  PrefetchViewer({super.key});
+  JumplistViewer({super.key});
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
-      future: allPrefetchFile,
+      future: allJumplistFile,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
         } else if (snapshot.hasError) {
           return Text('Error: ${snapshot.error}');
         } else {
-          return _PrefetchViewerContent(allPrefetchFile: snapshot.data!);
+          return _JumplistViewerContent(allJumplistFile: snapshot.data!);
         }
       },
     );
   }
 }
 
-class _PrefetchViewerContent extends StatefulWidget {
-  final List<Map<String, dynamic>> allPrefetchFile;
+class _JumplistViewerContent extends StatefulWidget {
+  final List<Map<String, dynamic>> allJumplistFile;
 
-  const _PrefetchViewerContent({required this.allPrefetchFile});
+  const _JumplistViewerContent({required this.allJumplistFile});
 
   @override
-  _PrefetchViewerContentState createState() => _PrefetchViewerContentState();
+  _JumplistViewerContentState createState() => _JumplistViewerContentState();
 }
 
-class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
-    with AutomaticKeepAliveClientMixin<_PrefetchViewerContent> {
+class _JumplistViewerContentState extends State<_JumplistViewerContent>
+    with AutomaticKeepAliveClientMixin<_JumplistViewerContent> {
   List<Map<String, dynamic>> filteredList = [];
   String filter = '';
   String sortKey = 'filename';
   bool sortAscending = true;
   String sortColumn = '';
   final _filterController = TextEditingController();
+
   @override
   bool get wantKeepAlive => true; // Add this line
 
   @override
   void initState() {
     super.initState();
-    filteredList = widget.allPrefetchFile;
+    filteredList = widget.allJumplistFile;
   }
 
   @override
@@ -62,7 +63,7 @@ class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
     if (mounted) {
       setState(() {
         filter = value;
-        filteredList = widget.allPrefetchFile
+        filteredList = widget.allJumplistFile
             .where((item) => item.values.any((v) => v.contains(filter)))
             .toList();
       });
@@ -77,7 +78,7 @@ class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
         filteredList.sort((a, b) {
           var aValue = a[sortKey];
           var bValue = b[sortKey];
-          if (key == 'fileSize' || key == 'run_counter') {
+          if (key == 'fileSize') {
             aValue = num.tryParse((aValue ?? '').replaceAll(",", ""));
             bValue = num.tryParse((bValue ?? '').replaceAll(",", ""));
           }
@@ -94,26 +95,37 @@ class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
     var columnWidths = {
-      'filename': 350,
-      'createTime': 270,
+      'filename': 500,
+      'fullPath': 600,
+      'recordTime': 270,
+      'createdTime': 270,
       'modifiedTime': 270,
+      'accessedTime': 270,
+      'fileAttributes': 180,
       'fileSize': 150,
-      'process_exe': 300,
-      'process_path': 500,
-      'run_counter': 180,
-      'lastRunTime': 900,
+      'entryID': 150,
+      'applicationID': 200,
+      'fileExtension': 180,
+      'computerName': 200,
+      'jumplistsFilename': 700,
       // ... 나머지 컬럼의 너비를 설정하세요
     };
     var columns = [
       'filename',
-      'createTime',
+      'fullPath',
+      'recordTime',
+      'createdTime',
       'modifiedTime',
+      'accessedTime',
+      'fileAttributes',
       'fileSize',
-      'process_exe',
-      'process_path',
-      'run_counter',
-      'lastRunTime',
+      'entryID',
+      'applicationID',
+      'fileExtension',
+      'computerName',
+      'jumplistsFilename',
     ]
         .map((key) => DataColumn2(
               label: SizedBox(
@@ -155,13 +167,18 @@ class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
       return DataRow(
         cells: [
           'filename',
-          'createTime',
+          'fullPath',
+          'recordTime',
+          'createdTime',
           'modifiedTime',
+          'accessedTime',
+          'fileAttributes',
           'fileSize',
-          'process_exe',
-          'process_path',
-          'run_counter',
-          'lastRunTime',
+          'entryID',
+          'applicationID',
+          'fileExtension',
+          'computerName',
+          'jumplistsFilename'
         ].map((key) {
           final value = map.containsKey(key) ? map[key] : 'N/A';
           return DataCell(
@@ -170,8 +187,8 @@ class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
               child: SelectableText(
                 value ?? 'N/A',
                 textAlign: key == 'filename' ||
-                        key == 'process_path' ||
-                        key == 'lastRunTime'
+                        key == 'fullPath' ||
+                        key == 'jumplistsFilename'
                     ? TextAlign.left
                     : TextAlign.center,
               ),
@@ -211,17 +228,17 @@ class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
             ),
           ),
           columns: columns,
-          source: _PrefetchDataSource(rows),
+          source: _JumplistDataSource(rows),
         ),
       ),
     );
   }
 }
 
-class _PrefetchDataSource extends DataTableSource {
+class _JumplistDataSource extends DataTableSource {
   final List<DataRow> rows;
 
-  _PrefetchDataSource(this.rows);
+  _JumplistDataSource(this.rows);
 
   @override
   DataRow getRow(int index) {

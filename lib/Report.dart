@@ -11,6 +11,7 @@ import 'package:seldat/Registry/RegistryFetcher.dart';
 import 'package:seldat/Prefetch/PrefetchViewer.dart';
 import 'package:seldat/srum/SrumFetcher.dart';
 import 'package:seldat/srum/SrumView.dart';
+import 'package:seldat/JumpList/JumpListViewer.dart';
 
 class Report extends StatefulWidget {
   final LogFetcher logFetcher;
@@ -38,7 +39,7 @@ class _ReportState extends State<Report>
   }
 
   late TabController reportTabController =
-      TabController(length: 4, vsync: this);
+      TabController(length: 5, vsync: this);
 
   @override
   void dispose() {
@@ -56,14 +57,18 @@ class _ReportState extends State<Report>
           child: TabBarView(
             controller: reportTabController,
             children: [
+              // const Text("Log Analysis"),
               LogAnalysis(
                 logFetcher: widget.logFetcher,
               ),
               RegistryUI(
                 registryFetcher: widget.registryFetcher,
               ),
+              // const Text('Registry'),
+              // SrumView(srumfetcher: widget.srumfetcher),
               SrumView(srumfetcher: widget.srumfetcher),
               PrefetchViewer(), // PrefetchViewer() 위젯 추가
+              JumplistViewer(), // JumpListViewer() 위젯 추가
             ],
           ),
         )
@@ -89,7 +94,14 @@ class _ReportState extends State<Report>
             height: 35,
             child: Text("SRUM"),
           ),
-          Tab(height: 35, child: Text("Prefetch")),
+          Tab(
+            height: 35,
+            child: Text("Prefetch"),
+          ),
+          Tab(
+            height: 35,
+            child: Text("JumpList"),
+          ),
         ]);
   }
 }
