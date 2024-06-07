@@ -66,19 +66,19 @@ class _SrumViewState extends State<SrumView>
         child: Text("No SRUM data found"),
       );
     }
-    print(type);
-    print(srumColumns(type).length);
     SrumDataSource datasource = SrumDataSource(
         srumData: data.where((srum) => srum.type == type).toList());
     return PaginatedDataTable2(
         headingRowDecoration: const BoxDecoration(
           color: Colors.black12,
         ),
-        minWidth: MediaQuery.of(context).size.width * 4,
+        minWidth: MediaQuery.of(context).size.width * 5,
         wrapInCard: false,
         autoRowsToHeight: true,
         showFirstLastButtons: true,
         fixedLeftColumns: 2,
+        sortColumnIndex: 1,
+        sortArrowAlwaysVisible: true,
         columns: srumColumns(type)
             .map((column) => DataColumn2(
                 fixedWidth: column == "Id"
@@ -87,9 +87,13 @@ class _SrumViewState extends State<SrumView>
                         ? 200
                         : column == "ExeInfo"
                             ? 700
-                            : column == "SID"
-                                ? 400
-                                : 220,
+                            : column.toLowerCase().contains("sid") ||
+                                    column.contains("Background") ||
+                                    column.contains("Foreground")
+                                ? 300
+                                : column.toLowerCase().contains("interface")
+                                    ? 250
+                                    : 170,
                 label: Text(
                   column,
                   overflow: TextOverflow.fade,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:isolate';
 import 'dart:math';
 import 'dart:collection';
 import 'package:flutter/material.dart';
@@ -23,83 +24,103 @@ class RegistryFolderViewer extends StatefulWidget {
 }
 
 class _RegistryFolderViewerState extends State<RegistryFolderViewer> {
-  Future<List<Map<String, dynamic>>>? _futureRegistryValues;
-
   bool _isDataFetched = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isDataFetched) {
-      _futureRegistryValues = widget.registryFetcher
-          .fetchAllRegistryData(); // Call the function here
       _isDataFetched = true;
     }
   }
 
-  // static Future<File> writeFileAsString({String? data, String? path}) async { // json파일로 확인해보려고 추가한 코드
-  //   final file =
-  //       File(path ?? 'cache\\tmp.txt'); // Use 'File' instead of '_localFile'
-  //   return file.writeAsString(data ?? '');
-  // }
-  //   List<Map<String, dynamic>> registryValues = await _futureRegistryValues!;
-  //   // String jsonString = jsonEncode(registryValues); // 내 pc에 json파일로 저장
-  //   // await writeFileAsString(
-  //   //     data: jsonString, path: 'D:\\test\\test.json'); // Use 'await' here
-  //   return registryValues;
-  // }
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: _futureRegistryValues,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
-        } else if (snapshot.hasError) {
-          return buildErrorWidget(snapshot.error);
-        } else {
-          return SingleChildScrollView(
-            child: ListView(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: snapshot.data!.map<Widget>(buildRegistryTile).toList(),
-            ),
-          );
-        }
-      },
+    widget.registryFetcher.onRegistryDataChanged = () {
+      setState(() {
+        print("Registry Data Changed");
+      });
+    };
+    return SingleChildScrollView(
+      child: buildRegistryTile(widget.registryFetcher.getRegistryData()),
     );
   }
 
   Widget buildRegistryTile(Map<String, dynamic> registry) {
+    if (registry.isEmpty) {
+      return const Center(
+        child: Text("No Registry data found"),
+      );
+    }
+    List<Padding> widgets = [];
+
     // registryName, values, subkeys를 받아서 ExpansionTile로 반환
-    return ExpansionTile(
-      title: Text('ㄴ ${registry['registryName']}'),
-      children: <Widget>[
-        ...buildRegistryValues(registry['values']).map((widget) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(18.0, 1.0, 1.0, 1.0),
-            child: widget,
-          );
-        }),
-        ...registry['subkeys'].map<Widget>((subkey) {
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(30.0, 1.0, 1.0, 1.0),
-            child: buildRegistryTile(subkey),
-          );
-        }).toList(),
-      ],
+    registry.forEach((key, value) {
+      return widgets.add(Padding(
+        padding: const EdgeInsets.only(left: 10),
+        child: ExpansionTile(
+          title: Text('ㄴ $key'),
+          onExpansionChanged: (isExpanded) {
+            if (isExpanded &&
+                (value['values'].isEmpty || value['subkeys'].isEmpty)) {
+              widget.registryFetcher.fillChild(value);
+            }
+          },
+          children: [
+            CustomScrollView(
+              shrinkWrap: true,
+              slivers: <Widget>[
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                    buildChildren(value),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ));
+    });
+
+    return ListView(
+      shrinkWrap: true,
+      children: widgets,
     );
   }
 
-  List<Widget> buildRegistryValues(Map<String, dynamic> values) {
-    // values를 받아서 ListTile로 반환
+  List<Widget> buildChildren(Map<String, dynamic> registry) {
     List<Widget> widgets = [];
-    widgets.add(buildListTile('Directory', values['directory']));
-    for (var value in values['value']) {
-      widgets.add(buildListTile("Name :  ${value['name'].toString()}",
+    widgets.add(buildListTile('Directory', registry['directory']));
+    registry['values'].forEach((key, value) {
+      widgets.add(buildListTile("Name :  ${key.toString()}",
           'Type :  ${value['type'].toString()}  |  Data :  ${value['data'].toString()}'));
-    }
+    });
+    registry['subkeys'].forEach((key, value) {
+      widgets.add(
+        ExpansionTile(
+          title: Text('ㄴ $key'),
+          onExpansionChanged: (isExpanded) {
+            if (isExpanded &&
+                (value['values'].isEmpty || value['subkeys'].isEmpty)) {
+              widget.registryFetcher.fillChild(value);
+            }
+          },
+          children: [
+            CustomScrollView(
+              shrinkWrap: true,
+              slivers: <Widget>[
+                SliverList(
+                  delegate: SliverChildListDelegate(
+                    buildChildren(value),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+
     return widgets;
   }
 
@@ -108,26 +129,6 @@ class _RegistryFolderViewerState extends State<RegistryFolderViewer> {
     return ListTile(
       title: Text(title),
       subtitle: Text(subtitle),
-    );
-  }
-
-  Widget buildErrorWidget(dynamic error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text('Error: $error'),
-          ElevatedButton(
-            child: const Text('Retry'),
-            onPressed: () {
-              setState(() {
-                _futureRegistryValues =
-                    widget.registryFetcher.fetchAllRegistryData();
-              });
-            },
-          ),
-        ],
-      ),
     );
   }
 }

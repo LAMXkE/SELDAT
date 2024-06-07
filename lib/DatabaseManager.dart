@@ -80,13 +80,6 @@ class DatabaseManager {
         .update('evtx', event.toMap(), where: 'id = ?', whereArgs: [event.id]);
   }
 
-  Future<List<Map<String, Object?>>> getRegistryList() async {
-    if (database == null) {
-      await open();
-    }
-    return database!.query('registry');
-  }
-
   List<Map<String, Object?>> EventLogCache = [];
 
   Future<PaginatedList<eventLog>> getEventLog({
@@ -194,11 +187,38 @@ class DatabaseManager {
     return PaginatedList(items: logs, nextPageToken: nextPageToken);
   }
 
-  Future<void> insertRegistry(registry reg) async {
+  Future<void> insertRegistry(REGISTRY reg) async {
     if (database == null) {
       await open();
     }
     await database?.insert('registry', reg.toMap());
+  }
+
+  Future<void> insertRegistryList(List<REGISTRY> reg) async {
+    if (database == null) {
+      await open();
+    }
+
+    Batch bat = database!.batch();
+    for (var r in reg) {
+      bat.insert('registry', r.toMap());
+    }
+    await bat.commit(noResult: true, continueOnError: true);
+  }
+
+  Future<List<REGISTRY>> getRegistryList() async {
+    if (database == null) {
+      await open();
+    }
+    List<Map<String, Object?>> registryList = await database!.query('registry');
+    return registryList
+        .map((e) => REGISTRY(
+              directory: e['directory'] as String,
+              key: e['key'] as String,
+              value: e['value'] as String,
+              type: e['type'] as String,
+            ))
+        .toList();
   }
 
   Future<void> insertSRUM(List<SRUM> srums) async {
@@ -409,13 +429,13 @@ class eventLog {
   }
 }
 
-class registry {
+class REGISTRY {
   final String directory;
   final String key;
   final String value;
   final String type;
 
-  const registry({
+  const REGISTRY({
     required this.directory,
     required this.key,
     required this.value,

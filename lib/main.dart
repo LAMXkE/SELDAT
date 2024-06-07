@@ -107,10 +107,10 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
         print("srum loaded");
         checkScanned();
       });
-      // registryFetcher.fetchAllRegistryData().then((value) {
-      //   print("registry loaded");
-      //   checkScanned();
-      // });
+      registryFetcher.loadDB().then((value) {
+        print("registry loaded");
+        checkScanned();
+      });
     });
   }
 
@@ -131,7 +131,11 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
       });
     }
 
-    // registryFetcher.fetchAllRegistryData();
+    if (!registryFetcher.isFetched) {
+      registryFetcher.fetchAllRegistryData().then((onValue) {
+        checkScanned();
+      });
+    }
   }
 
   int evtxCount = 0;
@@ -299,7 +303,12 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                               onPressed: () {
                                 srumFetcher.fetchSrumData();
                               },
-                              child: const Text("Fetch SRUM"))
+                              child: const Text("Fetch SRUM")),
+                          ElevatedButton(
+                              onPressed: () {
+                                registryFetcher.fetchAllRegistryData();
+                              },
+                              child: const Text("Fetch Registry")),
                         ],
                       ),
                     ),

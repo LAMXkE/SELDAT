@@ -40,7 +40,6 @@ class PrefetchDataParser {
           'lastRunTime': row[7],
         };
       }).toList();
-      print(allPrefetchFile);
       return allPrefetchFile;
     } catch (e) {
       throw Exception('Failed to read file: $e');
