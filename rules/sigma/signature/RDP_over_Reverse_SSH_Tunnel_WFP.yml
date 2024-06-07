@@ -1,23 +1,23 @@
-- title: RDP_over_Reverse_SSH_Tunnel_WFP
-  id: 88b18608-cb07-4ac6-bab0-03b0f6e39435
-  status: experimental
-  description: |
-    Detects svchost hosting RDP termsvcs communicating with the loopback address and on TCP port 3389
-  references:
-    - https://twitter.com/SBousseaden/status/1096148422984384514
-  author: Samir Bousseaden
-  date: 2019-02-16
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID: '5156'
-      Data.SourcePort: '3389'
-      Data.DestinationAddress:
-        - '127.*'
-        - '::1'
-      Data.DestinationPort: '3389'
-      Data.SourceAddress:
-        - '127.*'
-        - '::1'
+title: RDP_over_Reverse_SSH_Tunnel_WFP
+id: 88b18608-cb07-4ac6-bab0-03b0f6e39435
+status: experimental
+description: |
+  Detects svchost hosting RDP termsvcs communicating with the loopback address and on TCP port 3389
+references:
+  - https://twitter.com/SBousseaden/status/1096148422984384514
+author: Samir Bousseaden
+date: 2019-02-16
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID: '5156'
+    Data.SourcePort: '3389'
+    Data.DestinationAddress:
+      - '127.*'
+      - '::1'
+    Data.DestinationPort: '3389'
+    Data.SourceAddress:
+      - '127.*'
+      - '::1'

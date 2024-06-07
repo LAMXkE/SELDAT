@@ -1,18 +1,18 @@
-- title: Suspicious_Kerberos_RC4_Ticket_Encryption
-  id: e03c8aae-4b55-456a-8d02-fb86fc23a7c5
-  status: experimental
-  description: |
-    Detects service ticket requests using RC4 encryption type
-  references:
-    - https://adsecurity.org/?p=3458
-    - https://www.trimarcsecurity.com/single-post/TrimarcResearch/Detecting-Kerberoasting-Activity
-  author: null
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID: '4769'
-      Data.TicketOptions: '0x40810000'
-      Data.TicketEncryptionType: '0x17'
+title: Suspicious_Kerberos_RC4_Ticket_Encryption
+id: e03c8aae-4b55-456a-8d02-fb86fc23a7c5
+status: experimental
+description: |
+  Detects service ticket requests using RC4 encryption type
+references:
+  - https://adsecurity.org/?p=3458
+  - https://www.trimarcsecurity.com/single-post/TrimarcResearch/Detecting-Kerberoasting-Activity
+author: null
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID: '4769'
+    Data.TicketOptions: '0x40810000'
+    Data.TicketEncryptionType: '0x17'

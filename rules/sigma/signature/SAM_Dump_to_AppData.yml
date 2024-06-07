@@ -1,14 +1,14 @@
-- title: Detects suspicious SAM dump activity as cause by QuarksPwDump and other password dumpers
-  id: 136c9f9d-9d5e-4c3c-86b8-1b9629c05479
-  status: experimental
-  description: Detects suspicious SAM dump activity as cause by QuarksPwDump and other password dumpers
-  references: []
-  author: Florian Roth
-  date: 2019-10-22
-  logsource:
-    category: System
-    product: System
-  detection:
-    selection:
-      EventID: '16'
-      Data.HiveName: '*\AppData\Local\Temp\SAM-*.dmp *'
+title: Detects suspicious SAM dump activity as cause by QuarksPwDump and other password dumpers
+id: 136c9f9d-9d5e-4c3c-86b8-1b9629c05479
+status: experimental
+description: Detects suspicious SAM dump activity as cause by QuarksPwDump and other password dumpers
+references: []
+author: Florian Roth
+date: 2019-10-22
+logsource:
+  category: System
+  product: System
+detection:
+  selection:
+    EventID: '16'
+    Data.HiveName: '*\AppData\Local\Temp\SAM-*.dmp *'

@@ -1,29 +1,29 @@
-- title: Suspicious_access_to_sensitive_file_extensions
-  id: 01dc27f0-44d5-4931-80ff-bbfb2cfd7f6f
-  status: experimental
-  description: |
-    Detects known sensitive file extensions
-  references: []
-  author: Samir Bousseaden
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID:
-        - '5145'
-      Data.RelativeTargetName:
-        - '*.pst'
-        - '*.ost'
-        - '*.msg'
-        - '*.nst'
-        - '*.oab'
-        - '*.edb'
-        - '*.nsf'
-        - '*.bak'
-        - '*.dmp'
-        - '*.kirbi'
-        - '*\ntds.dit'
-        - '*\groups.xml'
-        - '*.rdp'
+title: Suspicious_access_to_sensitive_file_extensions
+id: 01dc27f0-44d5-4931-80ff-bbfb2cfd7f6f
+status: experimental
+description: |
+  Detects known sensitive file extensions
+references: []
+author: Samir Bousseaden
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID:
+      - '5145'
+    Data.RelativeTargetName:
+      - '*.pst'
+      - '*.ost'
+      - '*.msg'
+      - '*.nst'
+      - '*.oab'
+      - '*.edb'
+      - '*.nsf'
+      - '*.bak'
+      - '*.dmp'
+      - '*.kirbi'
+      - '*\ntds.dit'
+      - '*\groups.xml'
+      - '*.rdp'

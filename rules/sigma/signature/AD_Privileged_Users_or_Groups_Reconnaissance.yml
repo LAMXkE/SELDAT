@@ -1,29 +1,29 @@
-- title: AD_Privileged_Users_or_Groups_Reconnaissance
-  id: 478da792-83e5-486f-94dd-03246a9b0381
-  status: stable
-  description: |
-    Detect priv users or groups recon based on 4661 eventid and known privileged users or groups SIDs
-  references:
-    - https://blog.menasec.net/2019/02/threat-hunting-5-detecting-enumeration.html
-  author: Samir Bousseaden
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID: '4661'
-      Data.ObjectType:
-        - SAM_USER
-        - SAM_GROUP
-      Data.ObjectName:
-        - '*-512'
-        - '*-502'
-        - '*-500'
-        - '*-505'
-        - '*-519'
-        - '*-520'
-        - '*-544'
-        - '*-551'
-        - '*-555'
-        - '*admin*'
+title: AD_Privileged_Users_or_Groups_Reconnaissance
+id: 478da792-83e5-486f-94dd-03246a9b0381
+status: stable
+description: |
+  Detect priv users or groups recon based on 4661 eventid and known privileged users or groups SIDs
+references:
+  - https://blog.menasec.net/2019/02/threat-hunting-5-detecting-enumeration.html
+author: Samir Bousseaden
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID: '4661'
+    Data.ObjectType:
+      - SAM_USER
+      - SAM_GROUP
+    Data.ObjectName:
+      - '*-512'
+      - '*-502'
+      - '*-500'
+      - '*-505'
+      - '*-519'
+      - '*-520'
+      - '*-544'
+      - '*-551'
+      - '*-555'
+      - '*admin*'

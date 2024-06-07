@@ -1,24 +1,24 @@
-- title: Interactive_Logon_to_Server_Systems
-  id: 5d94a6a2-3b30-4bfc-9f47-818fa49e0330
-  status: experimental
-  description: |
-    Detects interactive console logons to
-  author: Florian Roth
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID:
-        - '528'
-        - '529'
-        - '4624'
-        - '4625'
-      Data.LogonType: '2'
-      Data.ComputerName:
-        - '%ServerSystems%'
-        - '%DomainControllers%'
-    exclusion:
-      Data.LogonProcessName: Advapi
-      Data.ComputerName: '%Workstations%'
+title: Interactive_Logon_to_Server_Systems
+id: 5d94a6a2-3b30-4bfc-9f47-818fa49e0330
+status: experimental
+description: |
+  Detects interactive console logons to
+author: Florian Roth
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID:
+      - '528'
+      - '529'
+      - '4624'
+      - '4625'
+    Data.LogonType: '2'
+    Data.ComputerName:
+      - '%ServerSystems%'
+      - '%DomainControllers%'
+  exclusion:
+    Data.LogonProcessName: Advapi
+    Data.ComputerName: '%Workstations%'

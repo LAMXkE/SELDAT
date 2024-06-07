@@ -1,21 +1,21 @@
-- title: Detects wceaux.dll access while WCE pass-the-hash remote command execution on source host
-  id: 5723b2f0-1c6f-4ee0-9873-9dbb96f8f9c2
-  status: experimental
-  description: |
-    Detects wceaux.dll access while WCE pass-the-hash remote command execution on source host
-  references:
-    - https://www.jpcert.or.jp/english/pub/sr/ir_research.html
-    - https://jpcertcc.github.io/ToolAnalysisResultSheet
-  author: Thomas Patzke
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID:
-        - '4656'
-        - '4658'
-        - '4660'
-        - '4663'
-      Data.ObjectName: '*\wceaux.dll'
+title: Detects wceaux.dll access while WCE pass-the-hash remote command execution on source host
+id: 5723b2f0-1c6f-4ee0-9873-9dbb96f8f9c2
+status: experimental
+description: |
+  Detects wceaux.dll access while WCE pass-the-hash remote command execution on source host
+references:
+  - https://www.jpcert.or.jp/english/pub/sr/ir_research.html
+  - https://jpcertcc.github.io/ToolAnalysisResultSheet
+author: Thomas Patzke
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID:
+      - '4656'
+      - '4658'
+      - '4660'
+      - '4663'
+    Data.ObjectName: '*\wceaux.dll'

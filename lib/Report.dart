@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Registry.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
+import 'package:seldat/Prefetch/PrefetchViewer.dart';
 import 'package:seldat/srum/SrumFetcher.dart';
 import 'package:seldat/srum/SrumView.dart';
 
@@ -62,7 +63,7 @@ class _ReportState extends State<Report>
                 registryFetcher: widget.registryFetcher,
               ),
               SrumView(srumfetcher: widget.srumfetcher),
-              const Center(child: Text("Prefetch Placeholder")),
+              PrefetchViewer(), // PrefetchViewer() 위젯 추가
             ],
           ),
         )

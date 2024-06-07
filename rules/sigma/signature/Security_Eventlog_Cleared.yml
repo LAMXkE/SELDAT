@@ -1,16 +1,16 @@
-- title: Security_Eventlog_Cleared
-  id: 6eebbf0d-42f3-4f40-b832-18f2d5799a43
-  status: experimental
-  description: |
-    Some threat groups tend to delete the local 'Security' Eventlog using certain utitlities
-  references: []
-  author: Florian Roth
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID:
-        - '517'
-        - '1102'
+title: Security_Eventlog_Cleared
+id: 6eebbf0d-42f3-4f40-b832-18f2d5799a43
+status: experimental
+description: |
+  Some threat groups tend to delete the local 'Security' Eventlog using certain utitlities
+references: []
+author: Florian Roth
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID:
+      - '517'
+      - '1102'

@@ -1,18 +1,18 @@
-- title: Admin_User_Remote_Logon
-  id: 148e21f8-39b0-49d0-8972-1e2f7c32cf9e
-  status: experimental
-  description: |
-    Detect remote login by Administrator user depending on internal pattern
-  references:
-    - https://car.mitre.org/wiki/CAR-2016-04-005
-  author: juju4
-  date: 2019-10-22
-  logsource:
-    category: Security
-    product: Security
-  detection:
-    selection:
-      EventID: '4624'
-      Data.LogonType: '10'
-      Data.AuthenticationPackageName: Negotiate
-      Data.AccountName: Admin-*
+title: Admin_User_Remote_Logon
+id: 148e21f8-39b0-49d0-8972-1e2f7c32cf9e
+status: experimental
+description: |
+  Detect remote login by Administrator user depending on internal pattern
+references:
+  - https://car.mitre.org/wiki/CAR-2016-04-005
+author: juju4
+date: 2019-10-22
+logsource:
+  category: Security
+  product: Security
+detection:
+  selection:
+    EventID: '4624'
+    Data.LogonType: '10'
+    Data.AuthenticationPackageName: Negotiate
+    Data.AccountName: Admin-*
