@@ -3,8 +3,8 @@ import 'dart:io';
 import 'dart:convert';
 
 class PrefetchDataParser {
-  Future<List<Map<String, String>>> getAllPrefetchFile() async {
-    var winPrefetchViewPath = './tools/WinPrefetchView.exe';
+  Future<List<Map<String, dynamic>>> getAllPrefetchFile() async {
+    var winPrefetchViewPath = 'tools/WinPrefetchView.exe';
     var prefetchTxtData = 'prefetchData.txt';
     var process = await Process.start(winPrefetchViewPath, [
       '/stab',
@@ -27,7 +27,7 @@ class PrefetchDataParser {
       var lines = txtContent.split('\n');
       var Rows = lines.map((line) => line.split('\t')).toList(); // Split by tab
 
-      List<Map<String, String>> allPrefetchFile =
+      List<Map<String, dynamic>> allPrefetchFile =
           Rows.where((row) => row.length >= 8).map((row) {
         return {
           'filename': row[0],
