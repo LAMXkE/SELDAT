@@ -20,6 +20,8 @@ dependencies:
   paged_datatable: ^2.0.1
   tflite_flutter: ^0.10.4
   koala: ^0.1.6
+  csv: ^6.0.0
+  data_table_2: ^2.5.12
 
 dev_dependencies:
   flutter_test:

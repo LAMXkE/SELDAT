@@ -174,15 +174,16 @@ class _LogAnalysisState extends State<LogAnalysis> {
                     pageSize: pageSize,
                     pageToken: pageToken,
                   );
+                  int idx = 0;
+                  maliciousList.clear();
+                  for (var element in data.items) {
+                    if (element.isMalicious) {
+                      maliciousList.add(idx);
+                    }
+                    idx++;
+                  }
                   setState(() {
                     logdata = data;
-                    int idx = 0;
-                    for (var element in data.items) {
-                      if (element.isMalicious) {
-                        maliciousList.add(idx);
-                      }
-                      idx++;
-                    }
                   });
                   return (data.items, data.nextPageToken);
                 },

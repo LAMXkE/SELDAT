@@ -34,10 +34,16 @@ class LogFetcher {
     List<Map<String, Object?>> evtxFileList = await db.getEvtxFileList();
     if (evtxFileList.isNotEmpty) {
       for (var file in evtxFileList) {
-        print(file);
         eventLogFileList.add(File(file['filename'].toString()));
         addCount(int.parse(file['logCount'].toString()));
       }
+      await db
+          .getEventLog(filename: "", pageSize: 15, pageToken: "0")
+          .then((value) {
+        if (value.items.isNotEmpty) {
+          isFetched = true;
+        }
+      });
       return true;
     }
     return false;
@@ -52,7 +58,7 @@ class LogFetcher {
   }
 
   // Methods
-  void scanFiles(Directory dir) async {
+  Future<void> scanFiles(Directory dir) async {
     await scan(dir);
     for (var file in eventLogFileList) {
       await parseEventLog(file, db);
@@ -85,6 +91,7 @@ class LogFetcher {
 
   Future parseEventLog(File file, DatabaseManager db) async {
     await runevtxdump(file.path).then((value) async {
+      List<eventLog> eventLogs = [];
       List<String> eventList = value.split(RegExp(r"Record [0-9]*"));
       for (String event in eventList) {
         XmlDocument record;
@@ -115,10 +122,11 @@ class LogFetcher {
             isAnalyzed: false,
             isMalicious: false,
             timestamp: DateTime.parse(timeCreated));
+        eventLogs.add(log);
         //write to sqlite database
-        await db.insertEventLog(log);
         addCount(1);
       }
+      db.insertEventLogs(eventLogs);
       db.insertEvtxFiles(evtxFiles(
           filename: file.path, logCount: eventList.length, isFetched: true));
     });

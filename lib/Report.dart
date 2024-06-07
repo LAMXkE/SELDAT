@@ -8,14 +8,18 @@ import 'dart:io';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Registry.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
+import 'package:seldat/srum/SrumFetcher.dart';
+import 'package:seldat/srum/SrumView.dart';
 
 class Report extends StatefulWidget {
   final LogFetcher logFetcher;
   final RegistryFetcher registryFetcher;
+  final Srumfetcher srumfetcher;
   const Report({
     super.key,
     required this.logFetcher,
     required this.registryFetcher,
+    required this.srumfetcher,
   });
 
   @override
@@ -57,7 +61,7 @@ class _ReportState extends State<Report>
               RegistryUI(
                 registryFetcher: widget.registryFetcher,
               ),
-              const Center(child: Text("SRUM Placeholder")),
+              SrumView(srumfetcher: widget.srumfetcher),
               const Center(child: Text("Prefetch Placeholder")),
             ],
           ),

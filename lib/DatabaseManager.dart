@@ -1,10 +1,8 @@
 import 'dart:collection';
-import 'dart:ffi';
 import 'dart:io';
-import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:seldat/srum/SrumFetcher.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -26,6 +24,17 @@ class DatabaseManager {
       await open();
     }
     await database!.insert('evtx', event.toMap());
+  }
+
+  Future<void> insertEventLogs(List<eventLog> events) async {
+    if (database == null) {
+      await open();
+    }
+    Batch batch = database!.batch();
+    for (var event in events) {
+      batch.insert('evtx', event.toMap());
+    }
+    await batch.commit(noResult: true, continueOnError: true);
   }
 
   Future<void> insertEvtxFiles(evtxFiles evtxFile) async {
@@ -71,24 +80,14 @@ class DatabaseManager {
         .update('evtx', event.toMap(), where: 'id = ?', whereArgs: [event.id]);
   }
 
-  Future<List<Map<String, Object?>>> getEventLogWithExplorer() async {
-    //  get Logs that are not analyzed and are in the same minute timerange of first log
-    // Execute raw SQL query
-    if (database == null) {
-      await open();
-    }
-    return database!.query('evtx',
-        orderBy: 'timestamp ASC',
-        where: 'full_log LIKE ?',
-        whereArgs: ['%explorer.exe%']);
-  }
-
   Future<List<Map<String, Object?>>> getRegistryList() async {
     if (database == null) {
       await open();
     }
     return database!.query('registry');
   }
+
+  List<Map<String, Object?>> EventLogCache = [];
 
   Future<PaginatedList<eventLog>> getEventLog({
     required String filename,
@@ -103,8 +102,14 @@ class DatabaseManager {
     bool sortDesc = false,
   }) async {
     print("pageToken $pageToken");
-    List<Map<String, Object?>> eventLogs =
-        List.from(await getEventLogList(filename));
+    if (EventLogCache.isEmpty) {
+      EventLogCache = await getEventLogList(filename);
+    }
+
+    List<Map<String, Object?>> eventLogs = filename == ""
+        ? EventLogCache.toList()
+        : List.from(
+            EventLogCache.where((element) => element['filename'] == filename));
 
     print("$event_id, $anomaly, $malicious, $content, $orderBy, $sortDesc");
 
@@ -190,18 +195,61 @@ class DatabaseManager {
   }
 
   Future<void> insertRegistry(registry reg) async {
+    if (database == null) {
+      await open();
+    }
     await database?.insert('registry', reg.toMap());
   }
 
-  Future<void> insertSRUM(SRUM srum) async {
-    await database?.insert('SRUM', srum.toMap());
+  Future<void> insertSRUM(List<SRUM> srums) async {
+    if (database == null) {
+      await open();
+    }
+    Batch bat = database!.batch();
+    for (var srum in srums) {
+      bat.insert('SRUM', srum.toMap());
+    }
+    await bat.commit(noResult: true, continueOnError: true);
+  }
+
+  Future<List<SRUM>> getSRUMList() async {
+    if (database == null) {
+      await open();
+    }
+    List<Map<String, Object?>> srumList = await database!.query('SRUM');
+    return srumList
+        .map((e) => SRUM(
+              id: e['id'] as int,
+              type: SRUMType.values[e['type'] as int],
+              timestamp:
+                  DateTime.fromMillisecondsSinceEpoch(e['timestamp'] as int),
+              exeinfo: e['exeinfo'] as String,
+              ExeInfoDescription: e['ExeInfoDescription'] as String,
+              exeTimeStamp: e['exeTimeStamp'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['exeTimeStamp'] as int),
+              SidType: e['SidType'] as String,
+              Sid: e['Sid'] as String,
+              Username: e['Username'] as String,
+              user_sid: e['user_sid'] as String,
+              AppId: e['AppId'] as int,
+              full: e['full'] as String,
+            ))
+        .toList();
   }
 
   Future<void> insertPrefetch(prefetch pref) async {
+    if (database == null) {
+      await open();
+    }
     await database?.insert('prefetch', pref.toMap());
   }
 
   Future<void> insertJumplist(jumplist jump) async {
+    if (database == null) {
+      await open();
+    }
     await database?.insert('jumplist', jump.toMap());
   }
 
@@ -247,12 +295,17 @@ class DatabaseManager {
 
                           CREATE TABLE "SRUM"(
                             id INTEGER NOT NULL,
-                            entry_num INTEGER NOT NULL,
-                            entry_creation DATETIME NOT NULL,
-                            application VARCHAR NOT NULL,
-                            user_sid VARCHAR NOT NULL,
-                            "Interface" VARCHAR NOT NULL,
-                            "Profile" INTEGER NOT NULL,
+                            type INTEGER NOT NULL,
+                            timestamp DATETIME,
+                            exeinfo VARCHAR,
+                            "ExeInfoDescription" VARCHAR,
+                            "exeTimeStamp" DATETIME,
+                            "SidType" VARCHAR,
+                            Sid VARCHAR,
+                            Username VARCHAR,
+                            "user_sid" VARCHAR,
+                            AppId INTEGER,
+                            full TEXT,
                             PRIMARY KEY(id)
                           );
 
@@ -360,7 +413,7 @@ class registry {
   final String directory;
   final String key;
   final String value;
-  final int type;
+  final String type;
 
   const registry({
     required this.directory,
@@ -380,30 +433,47 @@ class registry {
 }
 
 class SRUM {
-  final int entry_num;
-  final DateTime entry_creation;
-  final String application;
+  final int id;
+  final SRUMType type;
+  final DateTime timestamp;
+  final String exeinfo;
+  final String ExeInfoDescription;
+  final DateTime? exeTimeStamp;
+  final String SidType;
+  final String Sid;
+  final String Username;
   final String user_sid;
-  final String Interface;
-  final int Profile;
+  final int AppId;
+  final String full;
 
-  const SRUM({
-    required this.entry_num,
-    required this.entry_creation,
-    required this.application,
-    required this.user_sid,
-    required this.Interface,
-    required this.Profile,
-  });
+  const SRUM(
+      {required this.id,
+      required this.type,
+      required this.timestamp,
+      required this.exeinfo,
+      required this.ExeInfoDescription,
+      required this.SidType,
+      required this.Sid,
+      required this.exeTimeStamp,
+      required this.Username,
+      required this.user_sid,
+      required this.AppId,
+      required this.full});
 
   Map<String, Object?> toMap() {
     return {
-      'entry_num': entry_num,
-      'entry_creation': entry_creation,
-      'application': application,
+      'id': id,
+      'type': type.index,
+      'timestamp': timestamp.millisecondsSinceEpoch,
+      'exeinfo': exeinfo,
+      'ExeInfoDescription': ExeInfoDescription,
+      'exeTimeStamp': exeTimeStamp?.millisecondsSinceEpoch,
+      'SidType': SidType,
+      'Sid': Sid,
+      'Username': Username,
       'user_sid': user_sid,
-      'Interface': Interface,
-      'Profile': Profile,
+      'AppId': AppId,
+      'full': full,
     };
   }
 }
@@ -455,6 +525,7 @@ class jumplist {
   final DateTime accessTime;
   final String hostName;
   final int fileSize;
+  final String full;
 
   const jumplist({
     required this.filename,
@@ -465,6 +536,7 @@ class jumplist {
     required this.accessTime,
     required this.hostName,
     required this.fileSize,
+    required this.full,
   });
 
   Map<String, Object?> toMap() {
@@ -477,6 +549,7 @@ class jumplist {
       'accessTime': accessTime,
       'hostName': hostName,
       'fileSize': fileSize,
+      'full': full,
     };
   }
 }

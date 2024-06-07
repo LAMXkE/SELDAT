@@ -48,46 +48,22 @@ class _RegistryUIState extends State<RegistryUI>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return const Row(
+    return Row(
       children: [
         Expanded(
           // RegistryFolderViewer() 위젯의 높이를 건드리지 않고 화면을 분할하기 위해 Expanded 위젯 사용
           child: Align(
             alignment: Alignment.topCenter,
-            child: RegistryFolderViewer(),
+            child:
+                RegistryFolderViewer(registryFetcher: widget.registryFetcher),
           ),
         ),
-        Expanded(
+        const Expanded(
           child: Center(
             child: Text('Empty Registry Data'),
           ),
         ),
       ],
     );
-
-    // Column( // 이전 코드
-    //   children: [
-    //     Row(children: [
-    //       Column(
-    //         children: [
-    //           SizedBox(
-    //             height: 400,
-    //             child: RegistryFolderViewer(),
-    //             RegistryDirectory(
-    //               directory: widget.registryFetcher.getRegistry(),
-    //               selectReg: setSelected,
-    //               selectIdx: setSelectedIdx,
-    //             )
-    //           ),
-    //           SizedBox(
-    //             height: 40,
-    //             width: 300,
-    //           ),
-    //           Text("Registry data place holder")
-    //         ],
-    //       ),
-    //     ]),
-    //   ],
-    // );
   }
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:paged_datatable/l10n/generated/l10n.dart';
@@ -48,14 +49,25 @@ class MainApp extends StatefulWidget {
   State<MainApp> createState() => _MainAppState();
 }
 
+class MyMaterialScrollBehavior extends MaterialScrollBehavior {
+  @override
+  Widget buildScrollbar(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return Scrollbar(
+      controller: details.controller,
+      child: child,
+    );
+  }
+}
+
 class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   DatabaseManager db = DatabaseManager();
   late TabController tabController = TabController(length: 4, vsync: this);
   final Color _primaryColor = const Color.fromARGB(255, 0xFF, 0x61, 0x61);
   bool isMaximized = false;
   late LogFetcher logFetcher;
-  RegistryFetcher registryFetcher = RegistryFetcher();
-  Srumfetcher srumFetcher = Srumfetcher();
+  late RegistryFetcher registryFetcher;
+  late Srumfetcher srumFetcher;
   bool scanned = false;
 
   @override
@@ -64,35 +76,62 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
+  void checkScanned() {
+    print("${srumFetcher.isFetched}, ${logFetcher.isFetched}");
+    if (logFetcher.isFetched &&
+        // registryFetcher.isFetched &&
+        srumFetcher.isFetched) {
+      setState(() {
+        scanned = true;
+      });
+    }
+  }
+
   @override
   void initState() {
-    db.open();
-    logFetcher = LogFetcher(db);
     super.initState();
-    logFetcher.setAddCount(addEventLog);
-    registryFetcher.setAddCount(addRegistry);
-    srumFetcher.setAddCount(addSRUM);
-    logFetcher.loadDB().then((value) => {
-          if (value)
-            {
-              setState(() {
-                scanned = true;
-              })
-            }
-        });
-    // registryFetcher.setAddSRUM(addSRUM);
-    // registryFetcher.setAddPrefetch(addPrefetch);
-    // registryFetcher.setAddJumplist(addJumplist);
-    // srumFetcher.fetchSrumData();
+    db.open().then((value) {
+      logFetcher = LogFetcher(db);
+      srumFetcher = Srumfetcher(db);
+      registryFetcher = RegistryFetcher(db);
+
+      logFetcher.setAddCount(addEventLog);
+      registryFetcher.setAddCount(addRegistry);
+      srumFetcher.setAddCount(addSRUM);
+
+      logFetcher.loadDB().then((value) {
+        print("log loaded");
+        checkScanned();
+      });
+      srumFetcher.loadDB().then((value) {
+        print("srum loaded");
+        checkScanned();
+      });
+      // registryFetcher.fetchAllRegistryData().then((value) {
+      //   print("registry loaded");
+      //   checkScanned();
+      // });
+    });
   }
 
   void startScan() async {
     setState(() {
       scanned = true;
     });
-    logFetcher.setAddCount(addEventLog);
-    logFetcher.scanFiles(Directory('C:\\Windows\\System32\\winevt\\Logs'));
-    // registryFetcher.fetchRegistry();
+    if (!logFetcher.isFetched) {
+      logFetcher
+          .scanFiles(Directory('C:\\Windows\\System32\\winevt\\Logs'))
+          .then((onValue) {
+        checkScanned();
+      });
+    }
+    if (!srumFetcher.isFetched) {
+      srumFetcher.fetchSrumData().then((onValue) {
+        checkScanned();
+      });
+    }
+
+    // registryFetcher.fetchAllRegistryData();
   }
 
   int evtxCount = 0;
@@ -153,6 +192,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
         localizationsDelegates: const [
           PagedDataTableLocalization.delegate,
         ],
+        scrollBehavior: MyMaterialScrollBehavior(),
         color: Colors.transparent,
         home: Scaffold(
           backgroundColor: Colors.white,
@@ -217,6 +257,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                       Report(
                         logFetcher: logFetcher,
                         registryFetcher: registryFetcher,
+                        srumfetcher: srumFetcher,
                       )
                     else
                       const ReportSkeleton(),
@@ -236,7 +277,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                               child: const Text("Add Registry")),
                           ElevatedButton(
                               onPressed: () {
-                                addSRUM();
+                                addSRUM(1);
                               },
                               child: const Text("Add SRUM")),
                           ElevatedButton(
@@ -254,6 +295,11 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                                 logFetcher.runAIModelPredict();
                               },
                               child: const Text("Run AI Model")),
+                          ElevatedButton(
+                              onPressed: () {
+                                srumFetcher.fetchSrumData();
+                              },
+                              child: const Text("Fetch SRUM"))
                         ],
                       ),
                     ),
