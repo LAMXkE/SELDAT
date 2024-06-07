@@ -32,11 +32,11 @@ class RegistryFetcher {
 
   Future<void> loadDB() async {
     var registryNames = [
-      'currentConfig',
       'classesRoot',
       'currentUser',
       'localMachine',
       'allusers',
+      'currentConfig',
     ];
     registryList = await db.getRegistryList();
     if (registryList.isNotEmpty) {
@@ -133,10 +133,10 @@ class RegistryFetcher {
     List<REGISTRY> registryList = [];
     registry['values'].forEach((key, value) {
       registryList.add(REGISTRY(
-        key: key,
-        directory: registry['directory'],
-        value: value['data'],
-        type: value['type'],
+        key: key.toString(),
+        directory: registry['directory'].toString(),
+        value: value['data'].toString(),
+        type: value['type'].toString(),
       ));
     });
     if (registry['subkeys'].isNotEmpty) {
