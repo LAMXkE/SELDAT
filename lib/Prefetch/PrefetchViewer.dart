@@ -1,42 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:seldat/DatabaseManager.dart';
 import 'PrefetchFetcher.dart';
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
-class PrefetchViewer extends StatelessWidget {
-  final Future<List<Map<String, dynamic>>> allPrefetchFile =
-      PrefetchDataParser().getAllPrefetchFile();
+class PrefetchViewer extends StatefulWidget {
+  final Prefetchfetcher prefetchFetcher;
 
-  PrefetchViewer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: allPrefetchFile,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
-        } else if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        } else {
-          return _PrefetchViewerContent(allPrefetchFile: snapshot.data!);
-        }
-      },
-    );
-  }
-}
-
-class _PrefetchViewerContent extends StatefulWidget {
-  final List<Map<String, dynamic>> allPrefetchFile;
-
-  const _PrefetchViewerContent({required this.allPrefetchFile});
+  const PrefetchViewer({super.key, required this.prefetchFetcher});
 
   @override
-  _PrefetchViewerContentState createState() => _PrefetchViewerContentState();
+  State<PrefetchViewer> createState() => _PrefetchViewerState();
 }
 
-class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
-    with AutomaticKeepAliveClientMixin<_PrefetchViewerContent> {
+class _PrefetchViewerState extends State<PrefetchViewer>
+    with AutomaticKeepAliveClientMixin<PrefetchViewer> {
+  List<Map<String, dynamic>> fullList = [];
   List<Map<String, dynamic>> filteredList = [];
   String filter = '';
   String sortKey = 'filename';
@@ -49,7 +28,7 @@ class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
   @override
   void initState() {
     super.initState();
-    filteredList = widget.allPrefetchFile;
+    fullList = widget.prefetchFetcher.getPrefetchList();
   }
 
   @override
@@ -62,7 +41,7 @@ class _PrefetchViewerContentState extends State<_PrefetchViewerContent>
     if (mounted) {
       setState(() {
         filter = value;
-        filteredList = widget.allPrefetchFile
+        filteredList = fullList
             .where((item) => item.values.any((v) => v.contains(filter)))
             .toList();
       });

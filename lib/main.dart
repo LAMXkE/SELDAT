@@ -5,11 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:paged_datatable/l10n/generated/l10n.dart';
 import 'package:seldat/Dashboard/DashboardSkeleton.dart';
 import 'package:seldat/DatabaseManager.dart';
+import 'package:seldat/JumpList/JumpListFetcher.dart';
 import 'package:seldat/LogAnalysis.dart';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
 import 'package:seldat/Report/ReportSkeleton.dart';
 import 'package:seldat/srum/SrumFetcher.dart';
+import 'package:seldat/Prefetch/PrefetchFetcher.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:seldat/Dashboard.dart';
 import 'package:seldat/Report.dart';
@@ -68,6 +70,8 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   late LogFetcher logFetcher;
   late RegistryFetcher registryFetcher;
   late Srumfetcher srumFetcher;
+  late Prefetchfetcher prefetchFetcher;
+  late JumplistFetcher jumplistFetcher;
   bool scanned = false;
 
   @override
@@ -94,10 +98,13 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
       logFetcher = LogFetcher(db);
       srumFetcher = Srumfetcher(db);
       registryFetcher = RegistryFetcher(db);
+      prefetchFetcher = Prefetchfetcher(db);
+      jumplistFetcher = JumplistFetcher(db);
 
       logFetcher.setAddCount(addEventLog);
       registryFetcher.setAddCount(addRegistry);
       srumFetcher.setAddCount(addSRUM);
+      prefetchFetcher.setAddCount(addPrefetch);
 
       logFetcher.loadDB().then((value) {
         print("log loaded");
@@ -109,6 +116,14 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
       });
       registryFetcher.loadDB().then((value) {
         print("registry loaded");
+        checkScanned();
+      });
+      prefetchFetcher.loadDB().then((value) {
+        print("prefetch loaded");
+        checkScanned();
+      });
+      jumplistFetcher.loadDB().then((value) {
+        print("jumplist loaded");
         checkScanned();
       });
     });
@@ -133,6 +148,12 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
 
     if (!registryFetcher.isFetched) {
       registryFetcher.fetchAllRegistryData().then((onValue) {
+        checkScanned();
+      });
+    }
+
+    if (!prefetchFetcher.isFetched) {
+      prefetchFetcher.getAllPrefetchFile().then((onValue) {
         checkScanned();
       });
     }
@@ -262,6 +283,8 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                         logFetcher: logFetcher,
                         registryFetcher: registryFetcher,
                         srumfetcher: srumFetcher,
+                        prefetchFetcher: prefetchFetcher,
+                        jumplistFetcher: jumplistFetcher,
                       )
                     else
                       const ReportSkeleton(),
@@ -309,6 +332,16 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                                 registryFetcher.fetchAllRegistryData();
                               },
                               child: const Text("Fetch Registry")),
+                          ElevatedButton(
+                              onPressed: () {
+                                prefetchFetcher.getAllPrefetchFile();
+                              },
+                              child: const Text("Fetch Prefetch")),
+                          ElevatedButton(
+                              onPressed: () {
+                                jumplistFetcher.getAllJumpListFile();
+                              },
+                              child: const Text("Fetch Jumplist")),
                         ],
                       ),
                     ),

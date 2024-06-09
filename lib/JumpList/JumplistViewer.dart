@@ -1,42 +1,21 @@
 import 'package:flutter/material.dart';
-import 'JumplistFetcher.dart';
+import 'package:seldat/DatabaseManager.dart';
+import 'package:seldat/JumpList/JumpListFetcher.dart';
 import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
 
-class JumplistViewer extends StatelessWidget {
-  final Future<List<Map<String, dynamic>>> allJumplistFile =
-      JumpListDataParser().getAllJumpListFile();
+class JumplistViewer extends StatefulWidget {
+  final JumplistFetcher jumplistFetcher;
 
-  JumplistViewer({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: allJumplistFile,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const CircularProgressIndicator();
-        } else if (snapshot.hasError) {
-          return Text('Error: ${snapshot.error}');
-        } else {
-          return _JumplistViewerContent(allJumplistFile: snapshot.data!);
-        }
-      },
-    );
-  }
-}
-
-class _JumplistViewerContent extends StatefulWidget {
-  final List<Map<String, dynamic>> allJumplistFile;
-
-  const _JumplistViewerContent({required this.allJumplistFile});
+  const JumplistViewer({super.key, required this.jumplistFetcher});
 
   @override
-  _JumplistViewerContentState createState() => _JumplistViewerContentState();
+  State<JumplistViewer> createState() => _JumplistViewerContentState();
 }
 
-class _JumplistViewerContentState extends State<_JumplistViewerContent>
-    with AutomaticKeepAliveClientMixin<_JumplistViewerContent> {
+class _JumplistViewerContentState extends State<JumplistViewer>
+    with AutomaticKeepAliveClientMixin<JumplistViewer> {
+  List<Map<String, dynamic>> fullList = [];
   List<Map<String, dynamic>> filteredList = [];
   String filter = '';
   String sortKey = 'filename';
@@ -50,7 +29,7 @@ class _JumplistViewerContentState extends State<_JumplistViewerContent>
   @override
   void initState() {
     super.initState();
-    filteredList = widget.allJumplistFile;
+    fullList = widget.jumplistFetcher.getJumplistList();
   }
 
   @override
@@ -63,7 +42,7 @@ class _JumplistViewerContentState extends State<_JumplistViewerContent>
     if (mounted) {
       setState(() {
         filter = value;
-        filteredList = widget.allJumplistFile
+        filteredList = fullList
             .where((item) => item.values.any((v) => v.contains(filter)))
             .toList();
       });

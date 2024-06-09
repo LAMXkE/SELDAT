@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:seldat/JumpList/JumpListFetcher.dart';
 import 'package:seldat/LogAnalysis.dart';
 import 'package:seldat/LogAnalysis/FileView.dart';
 import 'dart:io';
 
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
+import 'package:seldat/Prefetch/PrefetchFetcher.dart';
 import 'package:seldat/Registry.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
 import 'package:seldat/Prefetch/PrefetchViewer.dart';
@@ -17,11 +19,15 @@ class Report extends StatefulWidget {
   final LogFetcher logFetcher;
   final RegistryFetcher registryFetcher;
   final Srumfetcher srumfetcher;
+  final Prefetchfetcher prefetchFetcher;
+  final JumplistFetcher jumplistFetcher;
   const Report({
     super.key,
     required this.logFetcher,
     required this.registryFetcher,
     required this.srumfetcher,
+    required this.prefetchFetcher,
+    required this.jumplistFetcher,
   });
 
   @override
@@ -67,8 +73,12 @@ class _ReportState extends State<Report>
               // const Text('Registry'),
               // SrumView(srumfetcher: widget.srumfetcher),
               SrumView(srumfetcher: widget.srumfetcher),
-              PrefetchViewer(), // PrefetchViewer() 위젯 추가
-              JumplistViewer(), // JumpListViewer() 위젯 추가
+              PrefetchViewer(
+                prefetchFetcher: widget.prefetchFetcher,
+              ), // PrefetchViewer() 위젯 추가
+              JumplistViewer(
+                jumplistFetcher: widget.jumplistFetcher,
+              ), // JumpListViewer() 위젯 추가
             ],
           ),
         )

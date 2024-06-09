@@ -266,11 +266,62 @@ class DatabaseManager {
     await database?.insert('prefetch', pref.toMap());
   }
 
+  Future<List<prefetch>> getPrefetchList() async {
+    if (database == null) {
+      await open();
+    }
+    List<Map<String, Object?>> prefetchList = await database!.query('prefetch');
+    return prefetchList
+        .map((e) => prefetch(
+              filename: e['filename'] as String,
+              createTime: DateTime.parse(e['createTime'] as String),
+              modifiedTime: DateTime.parse(e['modifiedTime'] as String),
+              fileSize: e['fileSize'] as int,
+              process_exe: e['process_exe'] as String,
+              process_path: e['process_path'] as String,
+              run_counter: e['run_counter'] as int,
+              lastRunTime0: DateTime.tryParse(['lastRunTime0'] as String),
+              lastRunTime1: DateTime.tryParse(e['lastRunTime1'] as String),
+              lastRunTime2: DateTime.tryParse(e['lastRunTime2'] as String),
+              lastRunTime3: DateTime.tryParse(e['lastRunTime3'] as String),
+              lastRunTime4: DateTime.tryParse(e['lastRunTime4'] as String),
+              lastRunTime5: DateTime.tryParse(e['lastRunTime5'] as String),
+              lastRunTime6: DateTime.tryParse(e['lastRunTime6'] as String),
+              lastRunTime7: DateTime.tryParse(e['lastRunTime7'] as String),
+              missingProcess: e['missingProcess'] as int == 1 ? true : false,
+            ))
+        .toList();
+  }
+
   Future<void> insertJumplist(jumplist jump) async {
     if (database == null) {
       await open();
     }
     await database?.insert('jumplist', jump.toMap());
+  }
+
+  Future<List<jumplist>> getJumplistList() async {
+    if (database == null) {
+      await open();
+    }
+    List<Map<String, Object?>> jumplistList = await database!.query('jumplist');
+    return jumplistList
+        .map((e) => jumplist(
+              filename: e['filename'] as String,
+              fullPath: e['fullPath'] as String,
+              recordTime: DateTime.parse(e['recordTime'] as String),
+              createTime: DateTime.parse(e['createTime'] as String),
+              modifiedTime: DateTime.parse(e['modifiedTime'] as String),
+              accessTime: DateTime.parse(e['accessTime'] as String),
+              fileAttributes: e['fileAttributes'] as String,
+              fileSize: e['fileSize'] as int,
+              entryID: e['entryID'] as String,
+              applicationID: e['applicationID'] as String,
+              fileExtension: e['fileExtension'] as String,
+              computerName: e['computerName'] as String,
+              jumplistsFilename: e['jumplistsFilename'] as String,
+            ))
+        .toList();
   }
 
   void close() {
@@ -329,19 +380,26 @@ class DatabaseManager {
                             PRIMARY KEY(id)
                           );
 
-                          CREATE TABLE prefetch(
-                            id INTEGER NOT NULL,
-                            filename VARCHAR NOT NULL,
-                            "createTime" DATETIME,
-                            "modifiedTime" DATETIME,
-                            "fileSize" INT,
-                            process_exe VARCHAR,
-                            process_path VARCHAR,
-                            run_counter INTEGER,
-                            "lastRunTime" DATETIME,
-                            "missingProcess" BOOLEAN,
-                            PRIMARY KEY(id)
-                          );
+                          CREATE TABLE "prefetch" (
+                            "id"	INTEGER NOT NULL,
+                            "filename"	VARCHAR NOT NULL,
+                            "createTime"	DATETIME,
+                            "modifiedTime"	DATETIME,
+                            "fileSize"	INT,
+                            "process_exe"	VARCHAR,
+                            "process_path"	VARCHAR,
+                            "run_counter"	INTEGER,
+                            "missingProcess"	BOOLEAN, 
+                            'lastRuntime0' datetime, 
+                            'lastRuntime1' datetime, 
+                            'lastRuntime2' datetime, 
+                            'lastRuntime3' datetime, 
+                            'lastRuntime4' datetime, 
+                            'lastRuntime5' datetime, 
+                            'lastRuntime6' datetime, 
+                            'lastRuntime7' datetime,
+                            PRIMARY KEY("id")
+                          )
 
                           CREATE TABLE jumplist(
                             id INTEGER NOT NULL,
@@ -506,7 +564,14 @@ class prefetch {
   final String process_exe;
   final String process_path;
   final int run_counter;
-  final DateTime lastRunTime;
+  final DateTime? lastRunTime0;
+  final DateTime? lastRunTime1;
+  final DateTime? lastRunTime2;
+  final DateTime? lastRunTime3;
+  final DateTime? lastRunTime4;
+  final DateTime? lastRunTime5;
+  final DateTime? lastRunTime6;
+  final DateTime? lastRunTime7;
   final bool missingProcess;
 
   const prefetch({
@@ -517,20 +582,34 @@ class prefetch {
     required this.process_exe,
     required this.process_path,
     required this.run_counter,
-    required this.lastRunTime,
+    required this.lastRunTime0,
+    required this.lastRunTime1,
+    required this.lastRunTime2,
+    required this.lastRunTime3,
+    required this.lastRunTime4,
+    required this.lastRunTime5,
+    required this.lastRunTime6,
+    required this.lastRunTime7,
     required this.missingProcess,
   });
 
   Map<String, Object?> toMap() {
     return {
       'filename': filename,
-      'createTime': createTime,
-      'modifiedTime': modifiedTime,
+      'createTime': createTime.millisecondsSinceEpoch,
+      'modifiedTime': modifiedTime.millisecondsSinceEpoch,
       'fileSize': fileSize,
       'process_exe': process_exe,
       'process_path': process_path,
       'run_counter': run_counter,
-      'lastRunTime': lastRunTime,
+      'lastRunTime0': lastRunTime0,
+      'lastRunTime1': lastRunTime1,
+      'lastRunTime2': lastRunTime2,
+      'lastRunTime3': lastRunTime3,
+      'lastRunTime4': lastRunTime4,
+      'lastRunTime5': lastRunTime5,
+      'lastRunTime6': lastRunTime6,
+      'lastRunTime7': lastRunTime7,
       'missingProcess': missingProcess,
     };
   }
@@ -543,9 +622,13 @@ class jumplist {
   final DateTime createTime;
   final DateTime modifiedTime;
   final DateTime accessTime;
-  final String hostName;
+  final String fileAttributes;
   final int fileSize;
-  final String full;
+  final String entryID;
+  final String applicationID;
+  final String fileExtension;
+  final String computerName;
+  final String jumplistsFilename;
 
   const jumplist({
     required this.filename,
@@ -554,22 +637,30 @@ class jumplist {
     required this.createTime,
     required this.modifiedTime,
     required this.accessTime,
-    required this.hostName,
+    required this.fileAttributes,
     required this.fileSize,
-    required this.full,
+    required this.entryID,
+    required this.applicationID,
+    required this.fileExtension,
+    required this.computerName,
+    required this.jumplistsFilename,
   });
 
   Map<String, Object?> toMap() {
     return {
       'filename': filename,
       'fullPath': fullPath,
-      'recordTime': recordTime,
-      'createTime': createTime,
-      'modifiedTime': modifiedTime,
-      'accessTime': accessTime,
-      'hostName': hostName,
+      'recordTime': recordTime.microsecondsSinceEpoch,
+      'createTime': createTime.millisecondsSinceEpoch,
+      'modifiedTime': modifiedTime.millisecondsSinceEpoch,
+      'accessTime': accessTime.millisecondsSinceEpoch,
+      'fileAttributes': fileAttributes,
       'fileSize': fileSize,
-      'full': full,
+      'entryID': entryID,
+      'applicationID': applicationID,
+      'fileExtension': fileExtension,
+      'computerName': computerName,
+      'jumplistsFilename': jumplistsFilename,
     };
   }
 }

@@ -2,7 +2,54 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 
-class JumpListDataParser {
+import 'package:seldat/DatabaseManager.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+class JumplistFetcher {
+  final DatabaseManager db;
+
+  List<Map<String, dynamic>> allJumplistFile = [];
+
+  bool isFetched = false;
+  Function addCount = () {};
+
+  JumplistFetcher(this.db);
+
+  void setAddCount(Function addCount) {
+    this.addCount = addCount;
+  }
+
+  List<Map<String, dynamic>> getJumplistList() {
+    return allJumplistFile;
+  }
+
+  Future<bool> loadDB() async {
+    List<jumplist> jumplistFileList = await db.getJumplistList();
+    if (jumplistFileList.isNotEmpty) {
+      addCount(jumplistFileList.length);
+      allJumplistFile = jumplistFileList.map((e) {
+        return {
+          'filename': e.filename,
+          'fullPath': e.fullPath,
+          'recordTime': e.recordTime,
+          'createdTime': e.createTime,
+          'modifiedTime': e.modifiedTime,
+          'accessedTime': e.accessTime,
+          'fileAttributes': e.fileAttributes,
+          'fileSize': e.fileSize,
+          'entryID': e.entryID,
+          'applicationID': e.applicationID,
+          'fileExtension': e.fileExtension,
+          'computerName': e.computerName,
+          'jumplistsFilename': e.jumplistsFilename,
+        };
+      }).toList();
+      isFetched = true;
+      return true;
+    }
+    return false;
+  }
+
   Future<List<Map<String, dynamic>>> getAllJumpListFile() async {
     var winJumpListViewPath = 'tools/JumpListsView.exe';
     var JumpListTxtData = 'JumpListData.txt';
