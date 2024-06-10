@@ -6,7 +6,6 @@ import 'package:paged_datatable/l10n/generated/l10n.dart';
 import 'package:seldat/Dashboard/DashboardSkeleton.dart';
 import 'package:seldat/DatabaseManager.dart';
 import 'package:seldat/JumpList/JumpListFetcher.dart';
-import 'package:seldat/LogAnalysis.dart';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
 import 'package:seldat/Report/ReportSkeleton.dart';
@@ -73,6 +72,10 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   late Prefetchfetcher prefetchFetcher;
   late JumplistFetcher jumplistFetcher;
   bool scanned = false;
+  bool loadingFromDB = false;
+  List<int> loadingStatus = [1, 1, 1, 1, 1];
+  List<String> dbList = [];
+  String DBPath = '';
 
   @override
   void dispose() {
@@ -81,19 +84,60 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   }
 
   void checkScanned() {
-    print("${srumFetcher.isFetched}, ${logFetcher.isFetched}");
+    print("CURRENT STATE: ------------------");
+    print("log: ${logFetcher.isFetched}");
+    print("registry: ${registryFetcher.isFetched}");
+    print("srum: ${srumFetcher.isFetched}");
+    print("prefetch: ${prefetchFetcher.isFetched}");
+    print("jumplist: ${jumplistFetcher.isFetched}");
+    print("-------------------------------");
+
+    setState(() {
+      if (logFetcher.isFetched) {
+        loadingStatus[0] = 0;
+      }
+      if (registryFetcher.isFetched) {
+        loadingStatus[1] = 0;
+      }
+      if (srumFetcher.isFetched) {
+        loadingStatus[2] = 0;
+      }
+      if (prefetchFetcher.isFetched) {
+        loadingStatus[3] = 0;
+      }
+      if (jumplistFetcher.isFetched) {
+        loadingStatus[4] = 0;
+      }
+    });
+
     if (logFetcher.isFetched &&
         // registryFetcher.isFetched &&
         srumFetcher.isFetched) {
-      setState(() {
-        scanned = true;
-      });
+      Future.delayed(const Duration(seconds: 1), () {}).then(
+        (value) {
+          setState(() {
+            scanned = true;
+          });
+        },
+      );
     }
   }
 
   @override
   void initState() {
     super.initState();
+
+    db.findDBList().then((value) {
+      if (value.isNotEmpty) {
+        setState(() {
+          loadingFromDB = true;
+          dbList = value;
+        });
+      }
+    });
+  }
+
+  void initFetcher() {
     db.open().then((value) {
       logFetcher = LogFetcher(db);
       srumFetcher = Srumfetcher(db);
@@ -105,6 +149,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
       registryFetcher.setAddCount(addRegistry);
       srumFetcher.setAddCount(addSRUM);
       prefetchFetcher.setAddCount(addPrefetch);
+      jumplistFetcher.setAddCount(addJumplist);
 
       logFetcher.loadDB().then((value) {
         print("log loaded");
@@ -130,9 +175,8 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   }
 
   void startScan() async {
-    setState(() {
-      scanned = true;
-    });
+    if (loadingFromDB) return;
+
     if (!logFetcher.isFetched) {
       logFetcher
           .scanFiles(Directory('C:\\Windows\\System32\\winevt\\Logs'))
@@ -157,6 +201,16 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
         checkScanned();
       });
     }
+
+    if (!jumplistFetcher.isFetched) {
+      jumplistFetcher.getAllJumpListFile().then((onValue) {
+        checkScanned();
+      });
+    }
+
+    setState(() {
+      scanned = true;
+    });
   }
 
   int evtxCount = 0;
@@ -183,15 +237,15 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     });
   }
 
-  void addPrefetch() {
+  void addPrefetch(int cnt) {
     setState(() {
-      prefetchCount++;
+      prefetchCount += cnt;
     });
   }
 
-  void addJumplist() {
+  void addJumplist(int cnt) {
     setState(() {
-      jumplistCount++;
+      jumplistCount += cnt;
     });
   }
 
@@ -277,7 +331,18 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                           prefetchCount: prefetchCount,
                           jumplistCount: jumplistCount)
                     else
-                      DashboardSkeleton(startAnalysis: startScan),
+                      DashboardSkeleton(
+                          startAnalysis: startScan,
+                          chooseDB: (String dbpath) {
+                            setState(() {
+                              DBPath = dbpath;
+                            });
+                            initFetcher();
+                          },
+                          chosen: DBPath != '' ? true : false,
+                          dbList: dbList,
+                          loadfromDB: loadingFromDB,
+                          loadingStatus: loadingStatus),
                     if (scanned)
                       Report(
                         logFetcher: logFetcher,
@@ -309,12 +374,12 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                               child: const Text("Add SRUM")),
                           ElevatedButton(
                               onPressed: () {
-                                addPrefetch();
+                                addPrefetch(1);
                               },
                               child: const Text("Add Prefetch")),
                           ElevatedButton(
                               onPressed: () {
-                                addJumplist();
+                                addJumplist(1);
                               },
                               child: const Text("Add Jumplist")),
                           ElevatedButton(
@@ -342,6 +407,16 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                                 jumplistFetcher.getAllJumpListFile();
                               },
                               child: const Text("Fetch Jumplist")),
+                          Row(
+                            children: [
+                              const TextField(
+                                decoration: InputDecoration(
+                                    hintText: "Enter a directory"),
+                              ),
+                              ElevatedButton(
+                                  onPressed: () {}, child: const Text("test"))
+                            ],
+                          )
                         ],
                       ),
                     ),

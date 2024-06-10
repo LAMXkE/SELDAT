@@ -37,12 +37,14 @@ class Srumfetcher {
   List<SrumData> srumData = [];
   List<SRUM> srumList = [];
 
-  Future<void> loadDB() async {
+  Future<bool> loadDB() async {
     srumList = await db.getSRUMList();
     if (srumList.isNotEmpty) {
       isFetched = true;
       addCount(srumList.length);
+      return true;
     }
+    return false;
   }
 
   Future<void> fetchSrumData() async {

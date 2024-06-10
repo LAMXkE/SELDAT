@@ -3,16 +3,17 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:paged_datatable/paged_datatable.dart';
 import 'package:seldat/DatabaseManager.dart';
 import 'package:seldat/LogAnalysis/FileView.dart';
 import 'dart:io';
 
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
+import 'package:seldat/RelatedArtifact.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:xml/xml.dart';
-import 'LogDetail.dart';
+import 'package:xml/xpath.dart';
+import 'LogAnalysis/LogDetail.dart';
 
 import 'LogAnalysis/GraphView.dart';
 
@@ -151,6 +152,7 @@ class _LogAnalysisState extends State<LogAnalysis>
                 pageSizes: const [15, 30, 50, 100],
                 configuration: const PagedDataTableConfiguration(),
                 fetcher: (pageSize, sortModel, filterModel, pageToken) async {
+                  print(filterModel);
                   String? orderBy;
                   bool descending = false;
                   if (sortModel != null) {
@@ -203,6 +205,7 @@ class _LogAnalysisState extends State<LogAnalysis>
                       id: "event_id",
                       name: "EventID"),
                   DropdownTableFilter(
+                    initialValue: const Text("Anomaly"),
                     items: [
                       const DropdownMenuItem(
                         value: "All",
@@ -219,11 +222,13 @@ class _LogAnalysisState extends State<LogAnalysis>
                     ],
                     chipFormatter: (value) => "$value",
                     id: "malicious",
-                    name: "log type",
+                    name: "Log Type",
                   ),
                   DateRangePickerTableFilter(
                     id: "timestamp",
                     name: "Timestamp",
+                    initialDatePickerMode: DatePickerMode.year,
+                    initialEntryMode: DatePickerEntryMode.input,
                     enabled: true,
                     firstDate: DateTime(2021, 1, 1),
                     lastDate: DateTime.now(),
@@ -236,6 +241,16 @@ class _LogAnalysisState extends State<LogAnalysis>
                 ],
                 fixedColumnCount: 2,
                 columns: [
+                  TableColumn(
+                      id: 'event_record_id',
+                      title: const Text("Event Record ID"),
+                      cellBuilder: (context, item, index) => GestureDetector(
+                          onTap: () => setState(() {
+                                detail = XmlDocument.parse(item.full_log);
+                              }),
+                          child: Text(item.event_record_id.toString())),
+                      size: const FixedColumnSize(200),
+                      sortable: true),
                   TableColumn(
                     id: "event_id",
                     title: const Text("Event ID"),
@@ -280,9 +295,27 @@ class _LogAnalysisState extends State<LogAnalysis>
     );
   }
 
-  Container _detailUI() {
-    return Container(
-      child: LogDetailElementsViewer(xmlData: detail),
+  Widget _detailUI() {
+    if (detail.toString() == "<empty/>") {
+      return const Center(child: Text("Select a log to view details"));
+    }
+    String? timeString =
+        detail.xpath("Event/System/TimeCreated/@SystemTime").first.value;
+    if (timeString == null) {
+      return const Center(child: Text("No time information found"));
+    }
+    DateTime date = DateTime.parse(timeString);
+    return Flex(
+      direction: Axis.vertical,
+      children: [
+        ExpansionTile(title: const Text("Related Artifacts"), children: [
+          RelatedArtifactWidget(
+              databaseManager: widget.logFetcher.db,
+              date: date,
+              exclude: "evtx")
+        ]),
+        Flexible(child: LogDetailElementsViewer(xmlData: detail)),
+      ],
     );
   }
 }

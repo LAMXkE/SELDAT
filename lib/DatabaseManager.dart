@@ -274,20 +274,46 @@ class DatabaseManager {
     return prefetchList
         .map((e) => prefetch(
               filename: e['filename'] as String,
-              createTime: DateTime.parse(e['createTime'] as String),
-              modifiedTime: DateTime.parse(e['modifiedTime'] as String),
+              createTime:
+                  DateTime.fromMillisecondsSinceEpoch(e['createTime'] as int),
+              modifiedTime:
+                  DateTime.fromMicrosecondsSinceEpoch(e['modifiedTime'] as int),
               fileSize: e['fileSize'] as int,
               process_exe: e['process_exe'] as String,
               process_path: e['process_path'] as String,
               run_counter: e['run_counter'] as int,
-              lastRunTime0: DateTime.tryParse(['lastRunTime0'] as String),
-              lastRunTime1: DateTime.tryParse(e['lastRunTime1'] as String),
-              lastRunTime2: DateTime.tryParse(e['lastRunTime2'] as String),
-              lastRunTime3: DateTime.tryParse(e['lastRunTime3'] as String),
-              lastRunTime4: DateTime.tryParse(e['lastRunTime4'] as String),
-              lastRunTime5: DateTime.tryParse(e['lastRunTime5'] as String),
-              lastRunTime6: DateTime.tryParse(e['lastRunTime6'] as String),
-              lastRunTime7: DateTime.tryParse(e['lastRunTime7'] as String),
+              lastRuntime0: e['lastRuntime0'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['lastRuntime0'] as int),
+              lastRuntime1: e['lastRuntime1'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['lastRuntime1'] as int),
+              lastRuntime2: e['lastRuntime2'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['lastRuntime2'] as int),
+              lastRuntime3: e['lastRuntime3'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['lastRuntime3'] as int),
+              lastRuntime4: e['lastRuntime4'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['lastRuntime4'] as int),
+              lastRuntime5: e['lastRuntime5'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['lastRuntime5'] as int),
+              lastRuntime6: e['lastRuntime6'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['lastRuntime6'] as int),
+              lastRuntime7: e['lastRuntime7'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['lastRuntime7'] as int),
               missingProcess: e['missingProcess'] as int == 1 ? true : false,
             ))
         .toList();
@@ -309,10 +335,19 @@ class DatabaseManager {
         .map((e) => jumplist(
               filename: e['filename'] as String,
               fullPath: e['fullPath'] as String,
-              recordTime: DateTime.parse(e['recordTime'] as String),
-              createTime: DateTime.parse(e['createTime'] as String),
-              modifiedTime: DateTime.parse(e['modifiedTime'] as String),
-              accessTime: DateTime.parse(e['accessTime'] as String),
+              recordTime: e['recordTime'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(e['recordTime'] as int),
+              createTime: e['createTime'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(e['createTime'] as int),
+              modifiedTime: e['modifiedTime'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(
+                      e['modifiedTime'] as int),
+              accessTime: e['accessTime'] == null
+                  ? null
+                  : DateTime.fromMillisecondsSinceEpoch(e['accessTime'] as int),
               fileAttributes: e['fileAttributes'] as String,
               fileSize: e['fileSize'] as int,
               entryID: e['entryID'] as String,
@@ -324,14 +359,94 @@ class DatabaseManager {
         .toList();
   }
 
+  Future<Map<String, dynamic>> getRelatedArtifacts(DateTime timestamp) async {
+    if (database == null) {
+      await open();
+    }
+    Map<String, dynamic> artifacts = {};
+    int ts = timestamp.millisecondsSinceEpoch;
+
+    int tsStart = ts - 5 * 60 * 1000;
+    int tsEnd = ts + 5 * 60 * 1000;
+
+    artifacts['evtx'] = await database!.query('evtx',
+        where: 'timestamp >= ? AND timestamp < ?', whereArgs: [tsStart, tsEnd]);
+
+    artifacts['srum'] = await database!.query('SRUM',
+        where: 'timestamp >= ? AND timestamp < ?', whereArgs: [tsStart, tsEnd]);
+
+    artifacts['prefetch'] = await database!.query('prefetch',
+        where: '(createTime >= ? AND createTime < ?) OR '
+            '(modifiedTime >= ? AND modifiedTime < ?) OR '
+            '(lastRuntime0 >= ? AND lastRuntime0 < ?) OR '
+            '(lastRuntime1 >= ? AND lastRuntime1 < ?) OR '
+            '(lastRuntime2 >= ? AND lastRuntime2 < ?) OR '
+            '(lastRuntime3 >= ? AND lastRuntime3 < ?) OR '
+            '(lastRuntime4 >= ? AND lastRuntime4 < ?) OR '
+            '(lastRuntime5 >= ? AND lastRuntime5 < ?) OR '
+            '(lastRuntime6 >= ? AND lastRuntime6 < ?) OR '
+            '(lastRuntime7 >= ? AND lastRuntime7 < ?)',
+        whereArgs: [
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+        ]);
+    artifacts['jumplist'] = await database!.query('jumplist',
+        where: '(recordTime >= ? AND recordTime < ?) OR '
+            '(createTime >= ? AND createTime < ?) OR '
+            '(modifiedTime >= ? AND modifiedTime < ?) OR '
+            '(accessTime >= ? AND accessTime < ?)',
+        whereArgs: [
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+          tsStart,
+          tsEnd,
+        ]);
+
+    return artifacts;
+  }
+
   void close() {
     database?.close();
     print("[*] Database closed");
   }
 
+  Future<List<String>> findDBList() async {
+    List<String> dbList = [];
+    Directory.current.listSync().forEach((element) {
+      if (element.path.contains(".db")) {
+        print("[*] Database found at ${element.path}");
+        return dbList.add(element.path);
+      }
+    });
+    return dbList;
+  }
+
   // Methods
   Future open() async {
     print("[*] Opening database...");
+
     database = await openDatabase(
       join(Directory.current.path, 'database.db'),
       version: 1,
@@ -564,14 +679,14 @@ class prefetch {
   final String process_exe;
   final String process_path;
   final int run_counter;
-  final DateTime? lastRunTime0;
-  final DateTime? lastRunTime1;
-  final DateTime? lastRunTime2;
-  final DateTime? lastRunTime3;
-  final DateTime? lastRunTime4;
-  final DateTime? lastRunTime5;
-  final DateTime? lastRunTime6;
-  final DateTime? lastRunTime7;
+  final DateTime? lastRuntime0;
+  final DateTime? lastRuntime1;
+  final DateTime? lastRuntime2;
+  final DateTime? lastRuntime3;
+  final DateTime? lastRuntime4;
+  final DateTime? lastRuntime5;
+  final DateTime? lastRuntime6;
+  final DateTime? lastRuntime7;
   final bool missingProcess;
 
   const prefetch({
@@ -582,14 +697,14 @@ class prefetch {
     required this.process_exe,
     required this.process_path,
     required this.run_counter,
-    required this.lastRunTime0,
-    required this.lastRunTime1,
-    required this.lastRunTime2,
-    required this.lastRunTime3,
-    required this.lastRunTime4,
-    required this.lastRunTime5,
-    required this.lastRunTime6,
-    required this.lastRunTime7,
+    required this.lastRuntime0,
+    required this.lastRuntime1,
+    required this.lastRuntime2,
+    required this.lastRuntime3,
+    required this.lastRuntime4,
+    required this.lastRuntime5,
+    required this.lastRuntime6,
+    required this.lastRuntime7,
     required this.missingProcess,
   });
 
@@ -602,15 +717,15 @@ class prefetch {
       'process_exe': process_exe,
       'process_path': process_path,
       'run_counter': run_counter,
-      'lastRunTime0': lastRunTime0,
-      'lastRunTime1': lastRunTime1,
-      'lastRunTime2': lastRunTime2,
-      'lastRunTime3': lastRunTime3,
-      'lastRunTime4': lastRunTime4,
-      'lastRunTime5': lastRunTime5,
-      'lastRunTime6': lastRunTime6,
-      'lastRunTime7': lastRunTime7,
-      'missingProcess': missingProcess,
+      'lastRuntime0': lastRuntime0?.millisecondsSinceEpoch,
+      'lastRuntime1': lastRuntime1?.millisecondsSinceEpoch,
+      'lastRuntime2': lastRuntime2?.millisecondsSinceEpoch,
+      'lastRuntime3': lastRuntime3?.millisecondsSinceEpoch,
+      'lastRuntime4': lastRuntime4?.millisecondsSinceEpoch,
+      'lastRuntime5': lastRuntime5?.millisecondsSinceEpoch,
+      'lastRuntime6': lastRuntime6?.millisecondsSinceEpoch,
+      'lastRuntime7': lastRuntime7?.millisecondsSinceEpoch,
+      'missingProcess': missingProcess ? 1 : 0,
     };
   }
 }
@@ -618,10 +733,10 @@ class prefetch {
 class jumplist {
   final String filename;
   final String fullPath;
-  final DateTime recordTime;
-  final DateTime createTime;
-  final DateTime modifiedTime;
-  final DateTime accessTime;
+  final DateTime? recordTime;
+  final DateTime? createTime;
+  final DateTime? modifiedTime;
+  final DateTime? accessTime;
   final String fileAttributes;
   final int fileSize;
   final String entryID;
@@ -650,10 +765,10 @@ class jumplist {
     return {
       'filename': filename,
       'fullPath': fullPath,
-      'recordTime': recordTime.microsecondsSinceEpoch,
-      'createTime': createTime.millisecondsSinceEpoch,
-      'modifiedTime': modifiedTime.millisecondsSinceEpoch,
-      'accessTime': accessTime.millisecondsSinceEpoch,
+      'recordTime': recordTime?.millisecondsSinceEpoch,
+      'createTime': createTime?.millisecondsSinceEpoch,
+      'modifiedTime': modifiedTime?.millisecondsSinceEpoch,
+      'accessTime': accessTime?.millisecondsSinceEpoch,
       'fileAttributes': fileAttributes,
       'fileSize': fileSize,
       'entryID': entryID,

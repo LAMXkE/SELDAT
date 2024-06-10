@@ -29,6 +29,7 @@ class _PrefetchViewerState extends State<PrefetchViewer>
   void initState() {
     super.initState();
     fullList = widget.prefetchFetcher.getPrefetchList();
+    filteredList = fullList;
   }
 
   @override
@@ -70,9 +71,7 @@ class _PrefetchViewerState extends State<PrefetchViewer>
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
+  Future<Widget> buildTable() async {
     var columnWidths = {
       'filename': 350,
       'createTime': 270,
@@ -81,7 +80,15 @@ class _PrefetchViewerState extends State<PrefetchViewer>
       'process_exe': 300,
       'process_path': 500,
       'run_counter': 180,
-      'lastRunTime': 900,
+      'lastRunTime0': 250,
+      'lastRunTime1': 250,
+      'lastRunTime2': 250,
+      'lastRunTime3': 250,
+      'lastRunTime4': 250,
+      'lastRunTime5': 250,
+      'lastRunTime6': 250,
+      'lastRunTime7': 250,
+      'missingProcess': 300,
       // ... 나머지 컬럼의 너비를 설정하세요
     };
     var columns = [
@@ -92,7 +99,15 @@ class _PrefetchViewerState extends State<PrefetchViewer>
       'process_exe',
       'process_path',
       'run_counter',
-      'lastRunTime',
+      'missingProcess',
+      'lastRunTime0',
+      'lastRunTime1',
+      'lastRunTime2',
+      'lastRunTime3',
+      'lastRunTime4',
+      'lastRunTime5',
+      'lastRunTime6',
+      'lastRunTime7',
     ]
         .map((key) => DataColumn2(
               label: SizedBox(
@@ -140,7 +155,15 @@ class _PrefetchViewerState extends State<PrefetchViewer>
           'process_exe',
           'process_path',
           'run_counter',
-          'lastRunTime',
+          'missingProcess',
+          'lastRunTime0',
+          'lastRunTime1',
+          'lastRunTime2',
+          'lastRunTime3',
+          'lastRunTime4',
+          'lastRunTime5',
+          'lastRunTime6',
+          'lastRunTime7',
         ].map((key) {
           final value = map.containsKey(key) ? map[key] : 'N/A';
           return DataCell(
@@ -160,39 +183,52 @@ class _PrefetchViewerState extends State<PrefetchViewer>
       );
     }).toList();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: ConstrainedBox(
-        constraints:
-            BoxConstraints(maxWidth: MediaQuery.of(context).size.width),
-        child: PaginatedDataTable2(
-          headingRowDecoration: const BoxDecoration(
-            color: Colors.black12,
-          ),
-          minWidth: MediaQuery.of(context).size.width * 4,
-          wrapInCard: false,
-          showFirstLastButtons: true,
-          fixedLeftColumns: 1,
-          rowsPerPage: 200,
-          header: TextField(
-            controller: _filterController,
-            onSubmitted: (value) {
-              updateFilter(value);
-            },
-            decoration: InputDecoration(
-              labelText: "Search",
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  updateFilter(_filterController.text);
-                },
-              ),
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width),
+      child: PaginatedDataTable2(
+        headingRowDecoration: const BoxDecoration(
+          color: Colors.black12,
+        ),
+        minWidth: MediaQuery.of(context).size.width * 4,
+        wrapInCard: false,
+        showFirstLastButtons: true,
+        fixedLeftColumns: 1,
+        rowsPerPage: 100,
+        header: TextField(
+          controller: _filterController,
+          onSubmitted: (value) {
+            updateFilter(value);
+          },
+          decoration: InputDecoration(
+            labelText: "Search",
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () {
+                updateFilter(_filterController.text);
+              },
             ),
           ),
-          columns: columns,
-          source: _PrefetchDataSource(rows),
         ),
+        columns: columns,
+        source: _PrefetchDataSource(rows),
       ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return FutureBuilder<Widget>(
+      future: buildTable(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return snapshot.data!;
+        } else {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+      },
     );
   }
 }

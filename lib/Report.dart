@@ -3,9 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:seldat/JumpList/JumpListFetcher.dart';
 import 'package:seldat/LogAnalysis.dart';
-import 'package:seldat/LogAnalysis/FileView.dart';
 import 'dart:io';
-
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Prefetch/PrefetchFetcher.dart';
 import 'package:seldat/Registry.dart';
@@ -13,7 +11,8 @@ import 'package:seldat/Registry/RegistryFetcher.dart';
 import 'package:seldat/Prefetch/PrefetchViewer.dart';
 import 'package:seldat/srum/SrumFetcher.dart';
 import 'package:seldat/srum/SrumView.dart';
-import 'package:seldat/JumpList/JumpListViewer.dart';
+
+import 'JumpList/JumplistViewer.dart';
 
 class Report extends StatefulWidget {
   final LogFetcher logFetcher;

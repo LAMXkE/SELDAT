@@ -81,7 +81,8 @@ class _SrumViewState extends State<SrumView>
         ),
         minWidth: MediaQuery.of(context).size.width * 5,
         wrapInCard: false,
-        autoRowsToHeight: true,
+        // autoRowsToHeight: true,
+        rowsPerPage: 100,
         showFirstLastButtons: true,
         fixedLeftColumns: 2,
         header: TextField(

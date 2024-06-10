@@ -50,6 +50,7 @@ class RegistryFetcher {
           'subkeys': {},
         };
       }
+      isFetched = true;
     }
   }
 

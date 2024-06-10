@@ -81,9 +81,12 @@ class _LogDetailElementsViewerState extends State<LogDetailElementsViewer> {
   @override
   Widget build(BuildContext context) {
     var data = createParsedXMLData(widget.xmlData);
-    return ListView(
-      controller: _scrollController,
-      children: data.map(_buildTiles).toList(),
+    return Container(
+      child: ListView(
+        shrinkWrap: true,
+        controller: _scrollController,
+        children: data.map(_buildTiles).toList(),
+      ),
     );
   }
 

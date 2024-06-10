@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:seldat/DatabaseManager.dart';
-import 'package:seldat/JumpList/JumpListFetcher.dart';
-import 'package:flutter/material.dart';
 import 'package:data_table_2/data_table_2.dart';
+import 'JumpListFetcher.dart';
 
 class JumplistViewer extends StatefulWidget {
   final JumplistFetcher jumplistFetcher;
@@ -30,6 +28,7 @@ class _JumplistViewerContentState extends State<JumplistViewer>
   void initState() {
     super.initState();
     fullList = widget.jumplistFetcher.getJumplistList();
+    filteredList = fullList;
   }
 
   @override
@@ -190,7 +189,7 @@ class _JumplistViewerContentState extends State<JumplistViewer>
           wrapInCard: false,
           showFirstLastButtons: true,
           fixedLeftColumns: 1,
-          rowsPerPage: 200,
+          rowsPerPage: 100,
           header: TextField(
             controller: _filterController,
             onSubmitted: (value) {

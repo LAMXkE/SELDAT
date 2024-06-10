@@ -42,9 +42,9 @@ class LogFetcher {
           .then((value) {
         if (value.items.isNotEmpty) {
           isFetched = true;
+          return true;
         }
       });
-      return true;
     }
     return false;
   }
