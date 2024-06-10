@@ -181,8 +181,11 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
 
   void startScan() async {
     if (loadingFromDB) return;
+    if (db.dbName == "") {
+      db.dbName = "${DateTime.now().millisecondsSinceEpoch}.db";
+    }
 
-    await (db.open());
+    await db.open();
 
     if (!logFetcher.isFetched) {
       logFetcher
