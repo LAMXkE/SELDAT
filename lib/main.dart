@@ -182,6 +182,8 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   void startScan() async {
     if (loadingFromDB) return;
 
+    await (db.open());
+
     if (!logFetcher.isFetched) {
       logFetcher
           .scanFiles(Directory('C:\\Windows\\System32\\winevt\\Logs'))
