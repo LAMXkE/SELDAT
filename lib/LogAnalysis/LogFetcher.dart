@@ -28,6 +28,9 @@ class LogFetcher {
     if (!Directory(".\\Artifacts\\EventLogs").existsSync()) {
       Directory(".\\Artifacts\\EventLogs").create();
     }
+    if (!Directory(".\\Artifacts\\EvtxCsv").existsSync()) {
+      Directory(".\\Artifacts\\EvtxCsv").create();
+    }
   }
 
   Future<bool> loadDB() async {
