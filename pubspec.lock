@@ -111,7 +111,7 @@ packages:
     source: hosted
     version: "4.0.0"
   flutter_localizations:
-    dependency: transitive
+    dependency: "direct main"
     description: flutter
     source: sdk
     version: "0.0.0"
@@ -228,10 +228,10 @@ packages:
     dependency: "direct main"
     description:
       name: paged_datatable
-      sha256: abd434e199497f2a7e2e7e359d6039d104c189dd0179ef0f248e7790edcef0a4
+      sha256: "540df02cc8d127f955bab37401cb77cf07434d969aab7e2b8e4a454d75ef3cd4"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.1"
+    version: "2.1.0"
   path:
     dependency: transitive
     description:
