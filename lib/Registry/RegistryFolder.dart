@@ -97,26 +97,29 @@ class _RegistryFolderViewerState extends State<RegistryFolderViewer> {
     });
     registry['subkeys'].forEach((key, value) {
       widgets.add(
-        ExpansionTile(
-          title: Text('ㄴ $key'),
-          onExpansionChanged: (isExpanded) {
-            if (isExpanded &&
-                (value['values'].isEmpty || value['subkeys'].isEmpty)) {
-              widget.registryFetcher.fillChild(value);
-            }
-          },
-          children: [
-            CustomScrollView(
-              shrinkWrap: true,
-              slivers: <Widget>[
-                SliverList(
-                  delegate: SliverChildListDelegate(
-                    buildChildren(value),
+        Padding(
+          padding: const EdgeInsets.only(left: 10),
+          child: ExpansionTile(
+            title: Text('ㄴ $key'),
+            onExpansionChanged: (isExpanded) {
+              if (isExpanded &&
+                  (value['values'].isEmpty || value['subkeys'].isEmpty)) {
+                widget.registryFetcher.fillChild(value);
+              }
+            },
+            children: [
+              CustomScrollView(
+                shrinkWrap: true,
+                slivers: <Widget>[
+                  SliverList(
+                    delegate: SliverChildListDelegate(
+                      buildChildren(value),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       );
     });

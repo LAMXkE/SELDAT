@@ -64,6 +64,7 @@ class LogFetcher {
       await parseEventLog(file, db);
     }
     await runAIModelPredict();
+    isFetched = true;
   }
 
   Future scan(Directory dir) async {
@@ -132,6 +133,11 @@ class LogFetcher {
   }
 
   Future<void> runAIModelPredict() async {
+    Directory(".\\Artifacts\\EvtxCsv").listSync().forEach((entity) {
+      if (entity is File && entity.path.endsWith('.csv')) {
+        entity.delete();
+      }
+    });
     print("Running AI Model");
     Process.run("./tools/runModel.exe", []).then((ProcessResult process) {
       bool isResult = false;

@@ -33,6 +33,7 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
+
     await database!.transaction((txn) async {
       Batch batch = txn.batch();
       for (var event in events) {

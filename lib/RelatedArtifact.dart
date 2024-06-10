@@ -140,11 +140,13 @@ class RelatedArtifactWidget extends StatelessWidget {
                                         .last
                                         .replaceAll('%4', '/')),
                                     subtitle: Text(snapshot.data!['prefetch']
-                                            [index]['fullPath']
+                                            [index]['process_path']
                                         .toString()),
                                     trailing: Text(snapshot.data!['prefetch']
-                                            [index]['computerName']
-                                        .toString()));
+                                                [index]['missingProcess'] ==
+                                            1
+                                        ? 'Deleted'
+                                        : 'Present'));
                               },
                             ),
                           ),
