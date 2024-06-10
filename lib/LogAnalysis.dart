@@ -148,7 +148,7 @@ class _LogAnalysisState extends State<LogAnalysis>
               ),
               child: PagedDataTable<String, eventLog>(
                 controller: _controller,
-                initialPageSize: 15,
+                initialPageSize: 100,
                 pageSizes: const [15, 30, 50, 100],
                 configuration: const PagedDataTableConfiguration(),
                 fetcher: (pageSize, sortModel, filterModel, pageToken) async {
@@ -318,4 +318,8 @@ class _LogAnalysisState extends State<LogAnalysis>
       ],
     );
   }
+}
+
+int sigmaRule(String log) {
+  return 0;
 }

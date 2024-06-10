@@ -28,6 +28,9 @@ class LogFetcher {
     if (!Directory(".\\Artifacts\\EventLogs").existsSync()) {
       Directory(".\\Artifacts\\EventLogs").create();
     }
+    if (!Directory(".\\Artifacts\\EvtxCsv").existsSync()) {
+      Directory(".\\Artifacts\\EvtxCsv").create();
+    }
   }
 
   Future<bool> loadDB() async {
@@ -68,6 +71,11 @@ class LogFetcher {
   }
 
   Future scan(Directory dir) async {
+    Directory("Artifacts\\EventLogs").listSync().forEach((entity) {
+      if (entity is File && entity.path.endsWith('.evtx')) {
+        entity.delete();
+      }
+    });
     try {
       var dirList = dir.list();
       await for (final FileSystemEntity entity in dirList) {
@@ -139,24 +147,30 @@ class LogFetcher {
       }
     });
     print("Running AI Model");
-    Process.run("./tools/runModel.exe", []).then((ProcessResult process) {
+    Process.run("./tools/runModel.exe", [],
+            workingDirectory: "${Directory.current.path}/tools")
+        .then((ProcessResult process) {
       bool isResult = false;
       process.stdout.toString().split("\n").forEach((element) {
         if (isResult) {
           if (element.length < 19) return;
-          String timeGroup = element.substring(0, 19);
+          String timeGroup = element.substring(0, 11);
           bool isMalicious = element.contains("True");
+          if (int.tryParse(timeGroup) == null) {
+            print("Error: $element");
+            return;
+          }
 
           if (isMalicious) {
-            db.updateMaliciousEvtx(
-                DateTime.parse(timeGroup).millisecondsSinceEpoch +
-                    9 * 60 * 60 * 1000);
+            print("Malicious Event: $element");
+            db.updateMaliciousEvtx(int.parse(timeGroup) * 1000);
           }
         }
         if (element.contains("[*] Printing results")) {
           isResult = true;
         }
       });
+      print("AI Model Finished");
     });
     // eventLog(event_id: 0, filename: "", full_log: "", isAnalyzed: false, riskScore: 0.0, timestamp: DateTime.now());
   }

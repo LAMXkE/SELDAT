@@ -120,9 +120,11 @@ class RegistryFetcher {
       Map<String, dynamic> registryData =
           await compute(fetchRegistryData, regName);
       _RegistryValues[regName] = registryData;
-      addCount(registryData.length);
+      print("current registryData : ${registryData.length}");
+      List<REGISTRY> registryList = toDBRegistry(registryData);
+      addCount(registryList.length);
       onRegistryDataChanged();
-      db.insertRegistryList(toDBRegistry(registryData));
+      db.insertRegistryList(registryList);
     }
 
     isFetched = true;

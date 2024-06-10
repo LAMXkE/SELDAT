@@ -77,11 +77,10 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
-    await database!.transaction((txn) async {
-      await txn.update('evtx', {'isMalicious': 1},
-          where: 'timestamp >= ? AND timestamp < ?',
-          whereArgs: [timestamp, timestamp + 60 * 1000]);
-    });
+    print("[*] Updating malicious evtx $timestamp");
+    database!.update('evtx', {'isMalicious': 1},
+        where: 'timestamp >= ? AND timestamp < ?',
+        whereArgs: [timestamp, timestamp + 60 * 1000]);
   }
 
   Future<void> updateEventLog(eventLog event) async {
