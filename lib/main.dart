@@ -126,6 +126,17 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    logFetcher = LogFetcher(db);
+    srumFetcher = Srumfetcher(db);
+    registryFetcher = RegistryFetcher(db);
+    prefetchFetcher = Prefetchfetcher(db);
+    jumplistFetcher = JumplistFetcher(db);
+
+    logFetcher.setAddCount(addEventLog);
+    registryFetcher.setAddCount(addRegistry);
+    srumFetcher.setAddCount(addSRUM);
+    prefetchFetcher.setAddCount(addPrefetch);
+    jumplistFetcher.setAddCount(addJumplist);
 
     Directory.current.listSync().forEach((element) {
       if (element.path.contains(".db")) {
@@ -141,17 +152,6 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
 
   void initFetcher() {
     db.open().then((value) {
-      logFetcher = LogFetcher(db);
-      srumFetcher = Srumfetcher(db);
-      registryFetcher = RegistryFetcher(db);
-      prefetchFetcher = Prefetchfetcher(db);
-      jumplistFetcher = JumplistFetcher(db);
-
-      logFetcher.setAddCount(addEventLog);
-      registryFetcher.setAddCount(addRegistry);
-      srumFetcher.setAddCount(addSRUM);
-      prefetchFetcher.setAddCount(addPrefetch);
-      jumplistFetcher.setAddCount(addJumplist);
       if (!loadingFromDB) {
         return;
       }
@@ -418,16 +418,6 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                                 jumplistFetcher.getAllJumpListFile();
                               },
                               child: const Text("Fetch Jumplist")),
-                          Row(
-                            children: [
-                              const TextField(
-                                decoration: InputDecoration(
-                                    hintText: "Enter a directory"),
-                              ),
-                              ElevatedButton(
-                                  onPressed: () {}, child: const Text("test"))
-                            ],
-                          )
                         ],
                       ),
                     ),
