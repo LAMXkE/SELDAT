@@ -116,6 +116,7 @@ class Srumfetcher {
           }
         }
         db.insertSRUM(srumList);
+        isFetched = true;
       } else {
         print('SrumECmd failed with exit code ${result.exitCode}');
       }

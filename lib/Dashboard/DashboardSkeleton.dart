@@ -7,6 +7,7 @@ class DashboardSkeleton extends StatelessWidget {
   final List<String> dbList;
   final Function chooseDB;
   final bool chosen;
+  final Function setLoadfromDB;
 
   const DashboardSkeleton(
       {super.key,
@@ -15,7 +16,8 @@ class DashboardSkeleton extends StatelessWidget {
       required this.loadingStatus,
       required this.dbList,
       required this.chooseDB,
-      required this.chosen});
+      required this.chosen,
+      required this.setLoadfromDB});
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +32,7 @@ class DashboardSkeleton extends StatelessWidget {
           children: [
             const Text("Artifacts Analysis"),
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton(
                   onPressed: () => startAnalysis(),
@@ -46,19 +49,38 @@ class DashboardSkeleton extends StatelessWidget {
   Widget _chooseDBView() {
     return Column(
       children: [
-        const Text("Choose Database"),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            for (String db in dbList)
+        const SizedBox(
+          height: 10.0,
+        ),
+        const Text(
+          "Choose Database",
+          style: TextStyle(
+            fontSize: 25,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 10.0),
+        for (String db in dbList)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
               ElevatedButton(
                 onPressed: () {
                   chooseDB(db);
                 },
                 child: Text(db),
               ),
-          ],
-        ),
+            ],
+          ),
+        const SizedBox(height: 10.0),
+        ElevatedButton(
+            onPressed: () {
+              // chooseDB("${DateTime.now()}-$computerName.db");
+
+              chooseDB("${DateTime.now().millisecondsSinceEpoch}.db");
+              setLoadfromDB(false);
+            },
+            child: const Text("Fetch New Artifacts")),
       ],
     );
   }

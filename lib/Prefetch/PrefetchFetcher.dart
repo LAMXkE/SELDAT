@@ -165,6 +165,7 @@ class Prefetchfetcher {
     }
     addCount(allPrefetchFile.length);
     prefetchList = allPrefetchFile;
+    isFetched = true;
     return allPrefetchFile;
     // } catch (e) {
     //   throw Exception('Failed to read file: $e');

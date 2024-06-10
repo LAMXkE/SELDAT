@@ -15,6 +15,7 @@ class DatabaseManager {
 
   // Properties
   Database? database;
+  String dbName = "";
 
   // Constructor
   DatabaseManager();
@@ -23,32 +24,40 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
-    await database!.insert('evtx', event.toMap());
+    await database!.transaction((txn) async {
+      await txn.insert('evtx', event.toMap());
+    });
   }
 
   Future<void> insertEventLogs(List<eventLog> events) async {
     if (database == null) {
       await open();
     }
-    Batch batch = database!.batch();
-    for (var event in events) {
-      batch.insert('evtx', event.toMap());
-    }
-    await batch.commit(noResult: true, continueOnError: true);
+    await database!.transaction((txn) async {
+      Batch batch = txn.batch();
+      for (var event in events) {
+        batch.insert('evtx', event.toMap());
+      }
+      await batch.commit(noResult: true);
+    });
   }
 
   Future<void> insertEvtxFiles(evtxFiles evtxFile) async {
     if (database == null) {
       await open();
     }
-    await database!.insert('evtxFiles', evtxFile.toMap());
+    await database!.transaction((txn) async {
+      await txn.insert('evtxFiles', evtxFile.toMap());
+    });
   }
 
   Future<List<Map<String, Object?>>> getEvtxFileList() async {
     if (database == null) {
       await open();
     }
-    return database!.query('evtxFiles');
+    return await database!.transaction((txn) async {
+      return await txn.query('evtxFiles');
+    });
   }
 
   Future<List<Map<String, Object?>>> getEventLogList(String filename) async {
@@ -67,9 +76,11 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
-    await database!.update('evtx', {'isMalicious': 1},
-        where: 'timestamp >= ? AND timestamp < ?',
-        whereArgs: [timestamp, timestamp + 60 * 1000]);
+    await database!.transaction((txn) async {
+      await txn.update('evtx', {'isMalicious': 1},
+          where: 'timestamp >= ? AND timestamp < ?',
+          whereArgs: [timestamp, timestamp + 60 * 1000]);
+    });
   }
 
   Future<void> updateEventLog(eventLog event) async {
@@ -96,6 +107,7 @@ class DatabaseManager {
   }) async {
     print("pageToken $pageToken");
     if (EventLogCache.isEmpty) {
+      print("[*] Cache is empty");
       EventLogCache = await getEventLogList(filename);
     }
 
@@ -171,7 +183,6 @@ class DatabaseManager {
                   DateTime.fromMillisecondsSinceEpoch(e['timestamp'] as int),
               filename: e['filename'] as String,
               full_log: e['full_log'] as String,
-              isAnalyzed: e['isAnalyzed'] as int == 1 ? true : false,
               isMalicious: e['isMalicious'] as int == 1 ? true : false,
               event_id: int.parse(e['event_id'].toString()),
             ))
@@ -199,11 +210,13 @@ class DatabaseManager {
       await open();
     }
 
-    Batch bat = database!.batch();
-    for (var r in reg) {
-      bat.insert('registry', r.toMap());
-    }
-    await bat.commit(noResult: true, continueOnError: true);
+    await database!.transaction((txn) async {
+      Batch batch = txn.batch();
+      for (var r in reg) {
+        batch.insert('registry', r.toMap());
+      }
+      await batch.commit(noResult: true);
+    });
   }
 
   Future<List<REGISTRY>> getRegistryList() async {
@@ -225,45 +238,51 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
-    Batch bat = database!.batch();
-    for (var srum in srums) {
-      bat.insert('SRUM', srum.toMap());
-    }
-    await bat.commit(noResult: true, continueOnError: true);
+    await database!.transaction((txn) async {
+      Batch bat = txn.batch();
+      for (var srum in srums) {
+        bat.insert('SRUM', srum.toMap());
+      }
+      await bat.commit(noResult: true, continueOnError: true);
+    });
   }
 
   Future<List<SRUM>> getSRUMList() async {
     if (database == null) {
       await open();
     }
-    List<Map<String, Object?>> srumList = await database!.query('SRUM');
-    return srumList
-        .map((e) => SRUM(
-              id: e['id'] as int,
-              type: SRUMType.values[e['type'] as int],
-              timestamp:
-                  DateTime.fromMillisecondsSinceEpoch(e['timestamp'] as int),
-              exeinfo: e['exeinfo'] as String,
-              ExeInfoDescription: e['ExeInfoDescription'] as String,
-              exeTimeStamp: e['exeTimeStamp'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['exeTimeStamp'] as int),
-              SidType: e['SidType'] as String,
-              Sid: e['Sid'] as String,
-              Username: e['Username'] as String,
-              user_sid: e['user_sid'] as String,
-              AppId: e['AppId'] as int,
-              full: e['full'] as String,
-            ))
-        .toList();
+    return await database!.transaction((txn) async {
+      List<Map<String, Object?>> srumList = await txn.query('SRUM');
+      return srumList
+          .map((e) => SRUM(
+                id: e['id'] as int,
+                type: SRUMType.values[e['type'] as int],
+                timestamp:
+                    DateTime.fromMillisecondsSinceEpoch(e['timestamp'] as int),
+                exeinfo: e['exeinfo'] as String,
+                ExeInfoDescription: e['ExeInfoDescription'] as String,
+                exeTimeStamp: e['exeTimeStamp'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['exeTimeStamp'] as int),
+                SidType: e['SidType'] as String,
+                Sid: e['Sid'] as String,
+                Username: e['Username'] as String,
+                user_sid: e['user_sid'] as String,
+                AppId: e['AppId'] as int,
+                full: e['full'] as String,
+              ))
+          .toList();
+    });
   }
 
   Future<void> insertPrefetch(prefetch pref) async {
     if (database == null) {
       await open();
     }
-    await database?.insert('prefetch', pref.toMap());
+    await database!.transaction((txn) async {
+      await txn.insert('prefetch', pref.toMap());
+    });
   }
 
   Future<List<prefetch>> getPrefetchList() async {
@@ -323,7 +342,9 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
-    await database?.insert('jumplist', jump.toMap());
+    await database!.transaction((txn) async {
+      await txn.insert('jumplist', jump.toMap());
+    });
   }
 
   Future<List<jumplist>> getJumplistList() async {
@@ -432,23 +453,16 @@ class DatabaseManager {
     print("[*] Database closed");
   }
 
-  Future<List<String>> findDBList() async {
-    List<String> dbList = [];
-    Directory.current.listSync().forEach((element) {
-      if (element.path.contains(".db")) {
-        print("[*] Database found at ${element.path}");
-        return dbList.add(element.path);
-      }
-    });
-    return dbList;
-  }
-
   // Methods
   Future open() async {
-    print("[*] Opening database...");
+    if (database != null) {
+      close();
+    }
+    print("[*] Opening database... $dbName");
+    print(join(Directory.current.path, dbName));
 
     database = await openDatabase(
-      join(Directory.current.path, 'database.db'),
+      join(Directory.current.path, dbName),
       version: 1,
       onCreate: (Database db, int version) async {
         return db.execute('''
@@ -514,7 +528,7 @@ class DatabaseManager {
                             'lastRuntime6' datetime, 
                             'lastRuntime7' datetime,
                             PRIMARY KEY("id")
-                          )
+                          );
 
                           CREATE TABLE jumplist(
                             id INTEGER NOT NULL,
@@ -524,8 +538,13 @@ class DatabaseManager {
                             "createTime" DATETIME,
                             "modifiedTime" DATETIME,
                             "accessTime" DATETIME,
-                            "hostName" VARCHAR,
                             "fileSize" INTEGER,
+                            "fileAttributes" VARCHAR,
+                            "entryID" VARCHAR,
+                            "applicationID" VARCHAR,
+                            "fileExtension" VARCHAR,
+                            "computerName" VARCHAR,
+                            "jumplistsFilename" VARCHAR,
                             PRIMARY KEY(id)
                           );
                           ''');
@@ -573,7 +592,6 @@ class eventLog {
   final DateTime timestamp;
   final String filename;
   final String full_log;
-  final bool isAnalyzed;
   final bool isMalicious;
   final int event_id;
   final int event_record_id;
@@ -584,7 +602,6 @@ class eventLog {
     required this.timestamp,
     required this.filename,
     required this.full_log,
-    required this.isAnalyzed,
     required this.isMalicious,
     required this.event_id,
   });
@@ -595,7 +612,6 @@ class eventLog {
       'timestamp': timestamp.millisecondsSinceEpoch,
       'filename': filename,
       'full_log': full_log,
-      'isAnalyzed': isAnalyzed ? 1 : 0,
       'isMalicious': isMalicious ? 1 : 0,
       'event_id': event_id,
     };

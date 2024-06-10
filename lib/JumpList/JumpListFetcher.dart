@@ -157,6 +157,7 @@ class JumplistFetcher {
       ));
       addCount(1);
     }
+    isFetched = true;
     return allJumpListFile;
   }
 }

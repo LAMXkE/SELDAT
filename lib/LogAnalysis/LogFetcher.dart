@@ -119,15 +119,14 @@ class LogFetcher {
             filename: file.path,
             event_record_id: eventRecordId,
             full_log: event,
-            isAnalyzed: false,
             isMalicious: false,
             timestamp: DateTime.parse(timeCreated));
         eventLogs.add(log);
         //write to sqlite database
         addCount(1);
       }
-      db.insertEventLogs(eventLogs);
-      db.insertEvtxFiles(evtxFiles(
+      await db.insertEventLogs(eventLogs);
+      await db.insertEvtxFiles(evtxFiles(
           filename: file.path, logCount: eventList.length, isFetched: true));
     });
   }

@@ -127,14 +127,16 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   void initState() {
     super.initState();
 
-    db.findDBList().then((value) {
-      if (value.isNotEmpty) {
-        setState(() {
-          loadingFromDB = true;
-          dbList = value;
-        });
+    Directory.current.listSync().forEach((element) {
+      if (element.path.contains(".db")) {
+        print("[*] Database found at ${element.path}");
+        dbList.add(element.path);
       }
     });
+
+    if (dbList.isNotEmpty) {
+      loadingFromDB = true;
+    }
   }
 
   void initFetcher() {
@@ -150,6 +152,9 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
       srumFetcher.setAddCount(addSRUM);
       prefetchFetcher.setAddCount(addPrefetch);
       jumplistFetcher.setAddCount(addJumplist);
+      if (!loadingFromDB) {
+        return;
+      }
 
       logFetcher.loadDB().then((value) {
         print("log loaded");
@@ -305,6 +310,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                       IconButton(
                         icon: const Icon(Icons.close),
                         onPressed: () {
+                          db.close();
                           windowManager.close();
                         },
                       ),
@@ -335,13 +341,18 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                           startAnalysis: startScan,
                           chooseDB: (String dbpath) {
                             setState(() {
-                              DBPath = dbpath;
+                              db.dbName = dbpath;
                             });
                             initFetcher();
                           },
-                          chosen: DBPath != '' ? true : false,
+                          chosen: db.dbName != '' ? true : false,
                           dbList: dbList,
                           loadfromDB: loadingFromDB,
+                          setLoadfromDB: (value) {
+                            setState(() {
+                              loadingFromDB = value;
+                            });
+                          },
                           loadingStatus: loadingStatus),
                     if (scanned)
                       Report(
