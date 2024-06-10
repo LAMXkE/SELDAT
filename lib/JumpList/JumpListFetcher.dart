@@ -93,7 +93,7 @@ class JumplistFetcher {
 
   Future<List<Map<String, dynamic>>> getAllJumpListFile() async {
     var winJumpListViewPath = 'tools/JumpListsView.exe';
-    var JumpListTxtData = 'JumpListData.txt';
+    var JumpListTxtData = 'Artifacts/JumpListData.txt';
     var process = await Process.start(winJumpListViewPath, [
       '/stab',
       JumpListTxtData

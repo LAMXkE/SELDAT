@@ -99,7 +99,7 @@ class Prefetchfetcher {
 
   Future<List<Map<String, dynamic>>> getAllPrefetchFile() async {
     var winPrefetchViewPath = 'tools/WinPrefetchView.exe';
-    var prefetchTxtData = 'prefetchData.txt';
+    var prefetchTxtData = 'Artifacts/prefetchData.txt';
     var process = await Process.start(winPrefetchViewPath, [
       '/stab',
       prefetchTxtData
