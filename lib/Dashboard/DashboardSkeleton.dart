@@ -250,14 +250,14 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
                   const Text(
                     "Event Logs",
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 20,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(width: 10.0),
                   widget.loadingStatus[0] == 0
                       ? const Icon(
-                          Icons.check,
+                          Icons.check_circle,
                           color: Colors.green,
                         )
                       : widget.loadingStatus[0] == 1
@@ -274,14 +274,14 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
                 const Text(
                   "Registry",
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(width: 10.0),
                 widget.loadingStatus[1] == 0
                     ? const Icon(
-                        Icons.check,
+                        Icons.check_circle,
                         color: Colors.green,
                       )
                     : widget.loadingStatus[1] == 1
@@ -297,14 +297,14 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
                 const Text(
                   "SRUM",
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(width: 10.0),
                 widget.loadingStatus[2] == 0
                     ? const Icon(
-                        Icons.check,
+                        Icons.check_circle,
                         color: Colors.green,
                       )
                     : widget.loadingStatus[2] == 1
@@ -322,14 +322,14 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
                   const Text(
                     "Jump Lists",
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 20,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(width: 10.0),
                   widget.loadingStatus[3] == 0
                       ? const Icon(
-                          Icons.check,
+                          Icons.check_circle,
                           color: Colors.green,
                         )
                       : widget.loadingStatus[3] == 1
@@ -348,14 +348,14 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
                   const Text(
                     "Prefetch",
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 20,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(width: 10.0),
                   widget.loadingStatus[4] == 0
                       ? const Icon(
-                          Icons.check,
+                          Icons.check_circle,
                           color: Colors.green,
                         )
                       : widget.loadingStatus[4] == 1

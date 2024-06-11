@@ -13,11 +13,46 @@ class Artifacts extends StatelessWidget {
     return Container(
       child: Column(
         children: [
-          const Text("Artifacts"),
+          const Text(
+            "Artifacts",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 71, 71, 71),
+            ),
+          ),
           Column(
             children: [
-              Text("$totalArtifactsCount Artifacts"),
-              SizedBox(width: 300, height: 300, child: PieChart(data)),
+              Text(
+                "$totalArtifactsCount Artifacts",
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(
+                height: 60,
+              ),
+              SizedBox(
+                width: 250,
+                height: 250,
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color.fromARGB(255, 100, 100, 100)
+                            .withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 3,
+                        offset:
+                            const Offset(1, 1), // changes position of shadow
+                      ),
+                    ],
+                  ),
+                  child: PieChart(data),
+                ),
+              ),
             ],
           ),
         ],

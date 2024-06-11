@@ -132,14 +132,20 @@ class _ParsedDataListViewState extends State<ParsedDataListView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(25.0),
+      // decoration: BoxDecoration(
+      //   border: Border.all(
+      //     color: const Color.fromARGB(
+      //         255, 199, 199, 199), // This sets the border color
+      //   ),
+      // ),
+      padding: const EdgeInsets.all(20.0),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 253, 253, 253),
-          borderRadius: BorderRadius.circular(10.0),
+          color: const Color.fromARGB(255, 248, 248, 248),
+          borderRadius: BorderRadius.circular(5.0),
           boxShadow: const [
             BoxShadow(
-              color: Color.fromARGB(255, 94, 94, 94),
+              color: Color.fromARGB(255, 185, 185, 185),
               blurRadius: 5.0,
               spreadRadius: 1.0,
             ),
@@ -164,12 +170,23 @@ class _ParsedDataListViewState extends State<ParsedDataListView> {
                               const EdgeInsets.fromLTRB(12.0, 5.0, 5.0, 5.0),
                           child: Align(
                             alignment: Alignment.topLeft,
-                            child: Text(
-                              key,
-                              style: const TextStyle(
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.w600,
-                              ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.lens,
+                                  size: 6.0,
+                                ),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text(
+                                  key,
+                                  style: const TextStyle(
+                                    fontSize: 16.0,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
