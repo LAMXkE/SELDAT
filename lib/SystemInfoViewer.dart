@@ -25,6 +25,16 @@ class _SystemInfoViewerState extends State<SystemInfoViewer> {
     });
   }
 
+  String? selectedKey;
+  int? selectedIndex;
+
+  void setSelected(String key, int index) {
+    setState(() {
+      selectedKey = key;
+      selectedIndex = index;
+    });
+  }
+
   Map<String, String> parseData(String data) {
     var headers = [
       // headers list
@@ -99,10 +109,25 @@ class _SystemInfoViewerState extends State<SystemInfoViewer> {
   }
 }
 
-class ParsedDataListView extends StatelessWidget {
+class ParsedDataListView extends StatefulWidget {
   final Map<String, String> parsedData;
 
   const ParsedDataListView({super.key, required this.parsedData});
+
+  @override
+  _ParsedDataListViewState createState() => _ParsedDataListViewState();
+}
+
+class _ParsedDataListViewState extends State<ParsedDataListView> {
+  String? selectedKey;
+  int? selectedIndex;
+  bool isHovering = false;
+  void setSelected(String key, int index) {
+    setState(() {
+      selectedKey = key;
+      selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,22 +136,20 @@ class ParsedDataListView extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: const Color.fromARGB(255, 253, 253, 253),
-          borderRadius: BorderRadius.circular(10.0), // 모서리를 둥글게 만듭니다.
+          borderRadius: BorderRadius.circular(10.0),
           boxShadow: const [
             BoxShadow(
-              color: Color.fromARGB(31, 94, 94, 94), // 그림자의 색상을 설정합니다.
-              blurRadius: 5.0, // 그림자의 흐림 정도를 설정합니다.
-              spreadRadius: 1.0, // 그림자의 확산 정도를 설정합니다.
+              color: Color.fromARGB(255, 94, 94, 94),
+              blurRadius: 5.0,
+              spreadRadius: 1.0,
             ),
           ],
         ),
         child: ListView.builder(
-          itemCount: parsedData.length,
+          itemCount: widget.parsedData.length,
           itemBuilder: (context, index) {
-            var key = parsedData.keys.elementAt(index);
-            var value = parsedData[key]!;
-            // var lineCount = value.split('\n').length;
-
+            var key = widget.parsedData.keys.elementAt(index);
+            var value = widget.parsedData[key]!;
             return Padding(
               padding: const EdgeInsets.all(10.0),
               child: IntrinsicHeight(

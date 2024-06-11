@@ -9,6 +9,7 @@ class Dashboard extends StatefulWidget {
   final int srumCount;
   final int prefetchCount;
   final int jumplistCount;
+  final List<int> loadingStatus;
 
   const Dashboard({
     super.key,
@@ -17,6 +18,7 @@ class Dashboard extends StatefulWidget {
     required this.srumCount,
     required this.prefetchCount,
     required this.jumplistCount,
+    required this.loadingStatus,
   });
 
   @override
@@ -106,71 +108,87 @@ class _DashboardState extends State<Dashboard>
                         widget.prefetchCount +
                         widget.jumplistCount,
                   ),
-                  Expanded(
-                    child: ListView(
-                      children: [
-                        for (int i = 0;
-                            i < artifactsData.sections.length;
-                            i += 2)
-                          Row(
-                            children: [
-                              for (int j = 0; j < 2; j++)
-                                if (i + j < artifactsData.sections.length)
-                                  Expanded(
-                                    child: Container(
-                                      margin: const EdgeInsets.fromLTRB(
-                                          15.0, 8.0, 15.0, 8.0),
-                                      padding: const EdgeInsets.fromLTRB(
-                                          15.0, 20.0, 15.0, 20.0),
-                                      decoration: BoxDecoration(
-                                        // border: Border.all(
-                                        //     color: Colors.blueAccent),
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                        color: Colors
-                                            .white, // Set the background color
-                                        boxShadow: const [
-                                          BoxShadow(
-                                            color: Color.fromARGB(31, 94, 94,
-                                                94), // 그림자의 색상을 설정합니다.
-                                            blurRadius:
-                                                5.0, // 그림자의 흐림 정도를 설정합니다.
-                                            spreadRadius:
-                                                1.0, // 그림자의 확산 정도를 설정합니다.
-                                          ),
-                                        ],
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            artifactsData.sections[i + j].title,
-                                            style: const TextStyle(
-                                              color: Color.fromARGB(
-                                                  255, 71, 71, 71),
-                                              fontSize: 25,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10.0),
-                                          Text(
-                                            '${getArtifactCount(artifactsData.sections[i + j].title)}',
-                                            style:
-                                                const TextStyle(fontSize: 20),
-                                          ),
-                                        ],
-                                      ),
+                  Flexible(
+                      child: ListView.builder(
+                    itemCount: 3, // Adjust as needed.
+                    itemBuilder: (context, rowIndex) {
+                      return Row(
+                        children: List.generate(2, (colIndex) {
+                          int index = rowIndex * 2 + colIndex;
+
+                          // Define the titles
+                          List<String> titles = [
+                            'EventLog',
+                            'Registry',
+                            'SRUM',
+                            'Prefetch',
+                            'Jumplist',
+                            'Annomaly',
+                          ];
+
+                          String title =
+                              titles[index]; // Get the title from the list
+                          String count =
+                              '${getArtifactCount(title)}'; // Get the count for this title
+
+                          return Expanded(
+                            child: Container(
+                              margin: const EdgeInsets.fromLTRB(
+                                  15.0, 8.0, 15.0, 8.0),
+                              padding: const EdgeInsets.fromLTRB(
+                                  15.0, 20.0, 15.0, 20.0),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10.0),
+                                color: Colors.white,
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color.fromARGB(255, 94, 94, 94),
+                                    blurRadius: 5.0,
+                                    spreadRadius: 1.0,
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  Text(
+                                    title,
+                                    style: const TextStyle(
+                                      color: Color.fromARGB(255, 71, 71, 71),
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                              if (i + 1 >= artifactsData.sections.length &&
-                                  artifactsData.sections.length % 2 != 0)
-                                Expanded(
-                                    child:
-                                        Container()), // Add an empty Expanded widget to fill the space
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
+                                  const SizedBox(height: 10.0),
+                                  if (widget.loadingStatus[index] == 1)
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          count,
+                                          style: const TextStyle(fontSize: 20),
+                                        ),
+                                        const SizedBox(width: 10.0),
+                                        const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    Text(
+                                      count,
+                                      style: const TextStyle(fontSize: 20),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }),
+                      );
+                    },
+                  )),
                 ],
               ),
             ),
