@@ -87,9 +87,9 @@ class _SystemInfoViewerState extends State<SystemInfoViewer> {
     if (currentKey != null) {
       parsedData[currentKey] = currentValue.trim();
     }
-    var jsonData = jsonEncode(parsedData);
-    var file = File('artifact/PCspec/data.txt');
-    file.writeAsString(jsonData);
+    // var jsonData = jsonEncode(parsedData);
+    // var file = File('artifact/PCspec/data.txt');
+    // file.writeAsString(jsonData);
     return parsedData;
   }
 
@@ -107,39 +107,71 @@ class ParsedDataListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(30.0),
-      decoration: const BoxDecoration(
-          // border: Border.all(color: Colors.blueAccent),
-          ),
-      child: ListView.builder(
-        itemCount: parsedData.length,
-        itemBuilder: (context, index) {
-          var key = parsedData.keys.elementAt(index);
-          var value = parsedData[key]!;
-          // var lineCount = value.split('\n').length;
+      padding: const EdgeInsets.all(25.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 253, 253, 253),
+          borderRadius: BorderRadius.circular(10.0), // 모서리를 둥글게 만듭니다.
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromARGB(31, 94, 94, 94), // 그림자의 색상을 설정합니다.
+              blurRadius: 5.0, // 그림자의 흐림 정도를 설정합니다.
+              spreadRadius: 1.0, // 그림자의 확산 정도를 설정합니다.
+            ),
+          ],
+        ),
+        child: ListView.builder(
+          itemCount: parsedData.length,
+          itemBuilder: (context, index) {
+            var key = parsedData.keys.elementAt(index);
+            var value = parsedData[key]!;
+            // var lineCount = value.split('\n').length;
 
-          return ListTile(
-            title: Padding(
-              padding: const EdgeInsets.all(2.0),
-              child: Text(
-                key,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
+            return Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: IntrinsicHeight(
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      flex: 1,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.fromLTRB(12.0, 5.0, 5.0, 5.0),
+                          child: Align(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              key,
+                              style: const TextStyle(
+                                fontSize: 16.0,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: SelectableText(
+                          value,
+                          style: const TextStyle(
+                            fontSize: 15.0,
+                            height: 2.0,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.fromLTRB(8.0, 5.0, 0, 0),
-              child: Text(
-                value,
-                style: const TextStyle(
-                  height: 2.0,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
