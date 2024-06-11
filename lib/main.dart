@@ -158,6 +158,10 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
 
       logFetcher.loadDB().then((value) {
         print("log loaded");
+        if (!value) {
+          loadingStatus[0] = 2;
+        }
+
         checkScanned();
       });
       srumFetcher.loadDB().then((value) {
@@ -423,6 +427,11 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                                 jumplistFetcher.getAllJumpListFile();
                               },
                               child: const Text("Fetch Jumplist")),
+                          ElevatedButton(
+                              onPressed: () {
+                                logFetcher.judgeSigmaRule();
+                              },
+                              child: const Text("Load Sigma Rule")),
                         ],
                       ),
                     ),

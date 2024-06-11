@@ -11,6 +11,7 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:win32/win32.dart';
 import 'package:xml/xml.dart';
 import 'package:xml/xpath.dart';
+import 'package:yaml/yaml.dart';
 
 class LogFetcher {
   // Properties
@@ -67,6 +68,7 @@ class LogFetcher {
       await parseEventLog(file, db);
     }
     await runAIModelPredict();
+    await judgeSigmaRule();
     isFetched = true;
   }
 
@@ -82,6 +84,10 @@ class LogFetcher {
         if (entity is File) {
           if (entity.path.endsWith(".evtx")) {
             // eventLogFileList.add(entity);
+            if (entity.path.contains(
+                "Microsoft-Windows-WER-PayloadHealth%4Operational.evtx")) {
+              continue;
+            }
             try {
               entity.copy(
                   "Artifacts\\EventLogs\\${entity.path.split('\\').last}");
@@ -128,6 +134,8 @@ class LogFetcher {
             filename: file.path,
             event_record_id: eventRecordId,
             full_log: event,
+            sigmaLevel: 0,
+            sigmaName: "",
             isMalicious: false,
             timestamp: DateTime.parse(timeCreated));
         eventLogs.add(log);
@@ -171,6 +179,7 @@ class LogFetcher {
         }
       });
       print("AI Model Finished");
+      db.clearCache();
     });
     // eventLog(event_id: 0, filename: "", full_log: "", isAnalyzed: false, riskScore: 0.0, timestamp: DateTime.now());
   }
@@ -185,4 +194,69 @@ class LogFetcher {
 
     return process.stdout;
   }
+
+  Future<void> judgeSigmaRule() async {
+    print("Running Sigma Detection");
+    Process.run(
+            "./tools/chainsaw/chainsaw.exe",
+            [
+              "hunt",
+              "../Artifacts/EventLogs/",
+              "-s",
+              "../rules",
+              "--mapping",
+              "chainsaw/mappings/sigma-event-logs-all.yml",
+              "--json"
+            ],
+            workingDirectory: "${Directory.current.path}/tools",
+            stdoutEncoding: Encoding.getByName("utf-8"))
+        .then((ProcessResult process) async {
+      bool isResult = false;
+      if (process.exitCode != 0) {
+        print("Error: ${process.stderr.toString()}");
+        return;
+      }
+      final datas = jsonDecode(process.stdout.toString());
+      for (var data in datas) {
+        int eventRecordId = int.parse(data["document"]["data"]["Event"]
+                ["System"]["EventRecordID"]
+            .toString());
+        String filename = data["document"]["path"]
+            .toString()
+            .substring(3)
+            .replaceAll("/", "\\");
+        String level = data["level"].toString();
+        String name = data["name"].toString();
+
+        await db.updateSigmaRule(eventRecordId, filename, name, level);
+      }
+      print("Sigma Finished");
+      db.clearCache();
+    });
+    return Future.value();
+  }
+}
+
+class SigmaRule {
+  String ruleName;
+  String ruleDescription;
+  String ruleLevel;
+  String ruleAuthor;
+  String ruleStatus;
+  YamlList ruleReferences;
+  YamlList ruleTags;
+  YamlMap ruleLogsource;
+  YamlMap ruleDetection;
+
+  SigmaRule({
+    required this.ruleName,
+    required this.ruleDescription,
+    required this.ruleLevel,
+    required this.ruleAuthor,
+    required this.ruleStatus,
+    required this.ruleReferences,
+    required this.ruleTags,
+    required this.ruleLogsource,
+    required this.ruleDetection,
+  });
 }

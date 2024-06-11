@@ -88,7 +88,7 @@ class _SystemInfoViewerState extends State<SystemInfoViewer> {
       parsedData[currentKey] = currentValue.trim();
     }
     var jsonData = jsonEncode(parsedData);
-    var file = File('artifact/PCspec/data.txt');
+    var file = File('Artifacts/PCspec/data.txt');
     file.writeAsString(jsonData);
     return parsedData;
   }

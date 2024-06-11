@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:seldat/DatabaseManager.dart';
 
-class RelatedArtifactWidget extends StatelessWidget {
+class RelatedArtifactWidget extends StatefulWidget {
   final DatabaseManager databaseManager;
   final DateTime date;
   final String exclude;
@@ -13,9 +13,14 @@ class RelatedArtifactWidget extends StatelessWidget {
       required this.exclude});
 
   @override
+  State<RelatedArtifactWidget> createState() => _RelatedArtifactWidgetState();
+}
+
+class _RelatedArtifactWidgetState extends State<RelatedArtifactWidget> {
+  @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
-      future: databaseManager.getRelatedArtifacts(date),
+      future: widget.databaseManager.getRelatedArtifacts(widget.date),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const CircularProgressIndicator();
@@ -26,7 +31,7 @@ class RelatedArtifactWidget extends StatelessWidget {
         } else {
           return Column(
             children: [
-              if (exclude != 'evtx')
+              if (widget.exclude != 'evtx')
                 ExpansionTile(
                   enabled: snapshot.data!['evtx'].isNotEmpty,
                   title: Text(
@@ -56,7 +61,7 @@ class RelatedArtifactWidget extends StatelessWidget {
                           ),
                   ],
                 ),
-              if (exclude != 'srum')
+              if (widget.exclude != 'srum')
                 ExpansionTile(
                   title: Text('SRUM (${snapshot.data!['srum']?.length ?? 0})'),
                   enabled: snapshot.data!['srum'].isNotEmpty,
@@ -84,7 +89,7 @@ class RelatedArtifactWidget extends StatelessWidget {
                           ),
                   ],
                 ),
-              if (exclude != 'jumplist')
+              if (widget.exclude != 'jumplist')
                 ExpansionTile(
                   enabled: snapshot.data!['jumplist'].isNotEmpty,
                   title: Text(
@@ -117,7 +122,7 @@ class RelatedArtifactWidget extends StatelessWidget {
                           ),
                   ],
                 ),
-              if (exclude != 'prefetch')
+              if (widget.exclude != 'prefetch')
                 ExpansionTile(
                   title: Text(
                       'Prefetch (${snapshot.data!['prefetch']?.length ?? 0})'),

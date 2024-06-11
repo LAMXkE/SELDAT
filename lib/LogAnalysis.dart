@@ -38,6 +38,7 @@ class _LogAnalysisState extends State<LogAnalysis>
   XmlDocument detail = XmlDocument.parse("<empty/>");
   int pageSize = 15;
   List<int> maliciousList = [];
+  List<int> maliciousLevel = [];
   PaginatedList<eventLog>? logdata;
 
   @override
@@ -126,7 +127,6 @@ class _LogAnalysisState extends State<LogAnalysis>
   }
 
   final _controller = PagedDataTableController<String, eventLog>();
-
   SizedBox _logLists() {
     return SizedBox(
       width: double.infinity,
@@ -141,7 +141,21 @@ class _LogAnalysisState extends State<LogAnalysis>
                 rowHeight: 45,
                 rowColor: (index) {
                   if (maliciousList.contains(index)) {
-                    return Colors.red[100];
+                    if (maliciousLevel[maliciousList.indexOf(index)] == 0) {
+                      return Colors.orange[300]!.withOpacity(0.5);
+                    }
+                    if (maliciousLevel[maliciousList.indexOf(index)] == 1) {
+                      return Colors.red[100]!.withOpacity(0.5);
+                    }
+                    if (maliciousLevel[maliciousList.indexOf(index)] == 2) {
+                      return Colors.red[300]!.withOpacity(0.5);
+                    }
+                    if (maliciousLevel[maliciousList.indexOf(index)] == 3) {
+                      return Colors.red[500]!.withOpacity(0.5);
+                    }
+                    if (maliciousLevel[maliciousList.indexOf(index)] == 4) {
+                      return Colors.red[800]!.withOpacity(0.5);
+                    }
                   }
                   return Colors.white;
                 },
@@ -184,9 +198,15 @@ class _LogAnalysisState extends State<LogAnalysis>
                   );
                   int idx = 0;
                   maliciousList.clear();
+                  maliciousLevel.clear();
                   for (var element in data.items) {
-                    if (element.isMalicious) {
+                    if (element.isMalicious || element.sigmaLevel > 0) {
                       maliciousList.add(idx);
+                      if (element.sigmaLevel > 0) {
+                        maliciousLevel.add(element.sigmaLevel);
+                      } else {
+                        maliciousLevel.add(0);
+                      }
                     }
                     idx++;
                   }
@@ -259,7 +279,7 @@ class _LogAnalysisState extends State<LogAnalysis>
                               detail = XmlDocument.parse(item.full_log);
                             }),
                         child: Text(item.event_id.toString())),
-                    size: const FixedColumnSize(200),
+                    size: const FixedColumnSize(180),
                     sortable: true,
                   ),
                   TableColumn(
@@ -283,8 +303,23 @@ class _LogAnalysisState extends State<LogAnalysis>
                       }),
                       child: Text(item.timestamp.toLocal().toString()),
                     ),
-                    size: const FixedColumnSize(300),
+                    size: const FixedColumnSize(250),
                     sortable: true,
+                  ),
+                  TableColumn(
+                    id: "tag",
+                    title: const Text("TAG"),
+                    cellBuilder: (context, item, index) => GestureDetector(
+                      onTap: () => setState(() {
+                        detail = XmlDocument.parse(item.full_log);
+                      }),
+                      child: Row(children: [
+                        if (item.isMalicious) const Chip(label: Text("AI")),
+                        if (item.sigmaLevel > 0)
+                          const Chip(label: Text("Sigma"))
+                      ]),
+                    ),
+                    size: const FixedColumnSize(300),
                   ),
                 ],
               ),
@@ -318,8 +353,4 @@ class _LogAnalysisState extends State<LogAnalysis>
       ],
     );
   }
-}
-
-int sigmaRule(String log) {
-  return 0;
 }

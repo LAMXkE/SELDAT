@@ -49,6 +49,12 @@ class Srumfetcher {
 
   Future<void> fetchSrumData() async {
     // Run SrumECmd in the tools directory
+
+    Directory(".\\Artifacts\\Srum").listSync().forEach((entity) {
+      if (entity is File && entity.path.endsWith('.csv')) {
+        entity.deleteSync();
+      }
+    });
     if (srumList.isNotEmpty) {
       isFetched = true;
       return;

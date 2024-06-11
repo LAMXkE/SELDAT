@@ -91,7 +91,41 @@ class DatabaseManager {
         .update('evtx', event.toMap(), where: 'id = ?', whereArgs: [event.id]);
   }
 
+  Future<void> updateSigmaRule(
+      int eventRecordId, String filename, String name, String level) async {
+    if (database == null) {
+      await open();
+    }
+    int intLevel = 0;
+    if (level == "low") {
+      intLevel = 1;
+    } else if (level == "medium") {
+      intLevel = 2;
+    } else if (level == "high") {
+      intLevel = 3;
+    } else if (level == "critical") {
+      intLevel = 4;
+    }
+    print(
+        "[*] Updating Sigma Rule $eventRecordId, $filename, $name, $level, $intLevel");
+
+    int result = await database!.update(
+      'evtx',
+      {
+        "sigmaName": name,
+        "sigmaLevel": intLevel,
+      },
+      where: 'event_record_id = ? AND filename = ?',
+      whereArgs: [eventRecordId, filename],
+    );
+    print("[*] Updated $result rows");
+  }
+
   List<Map<String, Object?>> EventLogCache = [];
+
+  void clearCache() {
+    EventLogCache = [];
+  }
 
   Future<PaginatedList<eventLog>> getEventLog({
     required String filename,
@@ -151,12 +185,6 @@ class DatabaseManager {
           .toList();
     }
 
-    if (anomaly != null) {
-      eventLogs = eventLogs
-          .where((element) => element['riskScore'] as int > 0.5)
-          .toList();
-    }
-
     if (content != null) {
       eventLogs = eventLogs
           .where((element) => element['full_log'].toString().contains(content))
@@ -164,9 +192,10 @@ class DatabaseManager {
     }
 
     if (malicious != null) {
-      eventLogs = eventLogs
-          .where((element) => element['isMalicious'] as int == 1)
-          .toList();
+      eventLogs = eventLogs.where((element) {
+        return element['isMalicious'] as int == 1 ||
+            int.parse(element['sigmaLevel'].toString()) > 0;
+      }).toList();
     }
 
     if (event_id != null) {
@@ -184,6 +213,9 @@ class DatabaseManager {
               filename: e['filename'] as String,
               full_log: e['full_log'] as String,
               isMalicious: e['isMalicious'] as int == 1 ? true : false,
+              sigmaName:
+                  e['sigmaName'] != null ? e['sigmaName'] as String : null,
+              sigmaLevel: e['sigmaLevel'] != null ? e['sigmaLevel'] as int : 0,
               event_id: int.parse(e['event_id'].toString()),
             ))
         .take(pageSize + 1)
@@ -480,6 +512,8 @@ class DatabaseManager {
                             filename VARCHAR,
                             full_log TEXT,
                             "isMalicious" BOOLEAN,
+                            "sigmaName" VARCHAR,
+                            "sigmaLevel" INT,
                             event_id INTEGER NOT NULL,
                             PRIMARY KEY(id)
                           );
@@ -595,16 +629,19 @@ class eventLog {
   final bool isMalicious;
   final int event_id;
   final int event_record_id;
+  final int sigmaLevel;
+  final String? sigmaName;
 
-  const eventLog({
-    this.id,
-    required this.event_record_id,
-    required this.timestamp,
-    required this.filename,
-    required this.full_log,
-    required this.isMalicious,
-    required this.event_id,
-  });
+  const eventLog(
+      {this.id,
+      required this.event_record_id,
+      required this.timestamp,
+      required this.filename,
+      required this.full_log,
+      required this.isMalicious,
+      required this.event_id,
+      required this.sigmaLevel,
+      required this.sigmaName});
 
   Map<String, dynamic> toMap() {
     return {
@@ -614,6 +651,8 @@ class eventLog {
       'full_log': full_log,
       'isMalicious': isMalicious ? 1 : 0,
       'event_id': event_id,
+      'sigmaLevel': sigmaLevel,
+      'sigmaName': sigmaName,
     };
   }
 }
