@@ -35,6 +35,10 @@ class LogFetcher {
     }
   }
 
+  void setAnomalyCount(Function addAnomalyCount) {
+    this.addAnomalyCount = addAnomalyCount;
+  }
+
   Future<bool> loadDB() async {
     List<Map<String, Object?>> evtxFileList = await db.getEvtxFileList();
     if (evtxFileList.isNotEmpty) {

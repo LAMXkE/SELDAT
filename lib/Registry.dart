@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:seldat/DatabaseManager.dart';
 import 'package:seldat/Registry/RegistryDirectory.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
 import 'package:seldat/Registry/RegistryFolder.dart';
@@ -24,6 +25,7 @@ class _RegistryUIState extends State<RegistryUI>
   Map<String, dynamic> selected = {};
   int selectedIdx = 0;
   Map<String, dynamic> registryDatas = {};
+  List<REGISTRY> modifiedRegistryDatas = [];
 
   late Future registryFuture;
 
@@ -58,9 +60,40 @@ class _RegistryUIState extends State<RegistryUI>
                 RegistryFolderViewer(registryFetcher: widget.registryFetcher),
           ),
         ),
-        const Expanded(
-          child: Center(
-            child: Text('Empty Registry Data'),
+        Expanded(child: modifiedRegistryView()),
+      ],
+    );
+  }
+
+  Widget modifiedRegistryView() {
+    if (widget.registryFetcher.Modified.isEmpty) {
+      return const Center(
+        child: Row(
+          children: [
+            Text('No Malicious Registry Data'),
+            Icon(
+              Icons.check_circle,
+              color: Colors.green,
+            ),
+          ],
+        ),
+      );
+    }
+    return Column(
+      children: [
+        const Text(
+          'Malicious Registry Data',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: widget.registryFetcher.Modified.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(widget.registryFetcher.Modified[index].directory),
+                subtitle: Text(widget.registryFetcher.Modified[index].value),
+              );
+            },
           ),
         ),
       ],

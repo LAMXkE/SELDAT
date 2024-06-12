@@ -6,7 +6,9 @@ class ReportSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: const Text("Report Skeleton"),
+      child: const Center(
+        child: Text('Generating Report...', style: TextStyle(fontSize: 20)),
+      ),
     );
   }
 }

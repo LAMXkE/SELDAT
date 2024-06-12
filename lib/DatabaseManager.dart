@@ -566,7 +566,7 @@ class DatabaseManager {
                           CREATE TABLE "computerInfo" (
                             "key"	TEXT,
                             "value"	TEXT
-                          )
+                          );
 
                           CREATE TABLE evtx(
                             id INTEGER NOT NULL,

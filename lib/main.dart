@@ -144,17 +144,9 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     systeminfofetcher = Systeminfofetcher(db);
 
     logFetcher.setAddCount(addEventLog);
-    logFetcher.addAnomalyCount = () {
-      setState(() {
-        anomalyCount++;
-      });
-    };
+    logFetcher.setAnomalyCount(addAnomalyCount);
     registryFetcher.setAddCount(addRegistry);
-    registryFetcher.addAnomalyCount = () {
-      setState(() {
-        anomalyCount++;
-      });
-    };
+    registryFetcher.addAnomalyCount = addAnomalyCount;
     srumFetcher.setAddCount(addSRUM);
     prefetchFetcher.setAddCount(addPrefetch);
     jumplistFetcher.setAddCount(addJumplist);
@@ -262,6 +254,12 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   void addEventLog(int count) {
     setState(() {
       evtxCount += count;
+    });
+  }
+
+  void addAnomalyCount(int count) {
+    setState(() {
+      anomalyCount += count;
     });
   }
 

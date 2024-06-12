@@ -372,7 +372,6 @@ Map<String, List<dynamic>> originalValue = {
 };
 
 bool isModified(Map<String, dynamic> registry) {
-  print(registry['directory']);
   if (originalValue.containsKey(registry['directory'])) {
     print("check modified: ${registry['directory']}");
     for (var key in registry['values'].keys) {
