@@ -72,6 +72,7 @@ class _LogAnalysisState extends State<LogAnalysis>
                     isMalicious: e['isMalicious'] == 1 ? true : false,
                   ))
               .toList();
+          logdata.sort((a, b) => a.timestamp.compareTo(b.timestamp));
         });
       });
     }

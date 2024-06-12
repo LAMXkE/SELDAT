@@ -21,10 +21,10 @@ class GraphView extends StatelessWidget {
     List<int> countdata = List.empty(growable: true);
     for (var item in data) {
       if (timedata.isEmpty) {
-        timedata.add(item.timestamp.toString().substring(0, 16));
+        timedata.add(item.timestamp.toString().substring(0, 13));
         countdata.add(1);
         anomalydata.add(false);
-      } else if (timedata.last == item.timestamp.toString().substring(0, 16)) {
+      } else if (timedata.last == item.timestamp.toString().substring(0, 13)) {
         countdata.last += 1;
         if (item.isMalicious || item.sigmaLevel > 0) {
           anomalydata.last = true;
@@ -38,7 +38,7 @@ class GraphView extends StatelessWidget {
         } else {
           anomalydata.add(false);
         }
-        timedata.add(item.timestamp.toString().substring(0, 16));
+        timedata.add(item.timestamp.toString().substring(0, 13));
         countdata.add(1);
       }
     }

@@ -355,6 +355,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
         localizationsDelegates: const [
           PagedDataTableLocalization.delegate,
         ],
+        restorationScopeId: "Seldat",
         scrollBehavior: MyMaterialScrollBehavior(),
         color: Colors.transparent,
         home: Scaffold(
