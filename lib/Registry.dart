@@ -67,15 +67,25 @@ class _RegistryUIState extends State<RegistryUI>
 
   Widget modifiedRegistryView() {
     if (widget.registryFetcher.Modified.isEmpty) {
-      return const Center(
-        child: Row(
-          children: [
-            Text('No Malicious Registry Data'),
-            Icon(
-              Icons.check_circle,
-              color: Colors.green,
-            ),
-          ],
+      return const Padding(
+        padding: EdgeInsets.only(bottom: 100.0),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'No Malicious Registry Data',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+              Icon(
+                Icons.check_circle,
+                color: Colors.green,
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -83,7 +93,7 @@ class _RegistryUIState extends State<RegistryUI>
       children: [
         const Text(
           'Malicious Registry Data',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
         ),
         Expanded(
           child: ListView.builder(

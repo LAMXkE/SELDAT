@@ -20,6 +20,9 @@ class _SrumViewState extends State<SrumView>
   late TabController srumTabController = TabController(length: 7, vsync: this);
   List<bool> loaded = List.filled(7, false);
   List<SRUM> srumData = [];
+  final _controller = TextEditingController();
+  bool isCaseSensitive = false;
+
   @override
   bool get wantKeepAlive => true;
   @override
@@ -86,10 +89,36 @@ class _SrumViewState extends State<SrumView>
         showFirstLastButtons: true,
         fixedLeftColumns: 2,
         header: TextField(
-          onChanged: datasource.updateFilter,
-          decoration: const InputDecoration(
+          controller: _controller,
+          onSubmitted: (value) {
+            isCaseSensitive
+                ? datasource.updateFilter(value)
+                : datasource.updateFilter2(value);
+          },
+          decoration: InputDecoration(
             labelText: "Search",
-            suffixIcon: Icon(Icons.search),
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.text_fields),
+                  color: isCaseSensitive ? Colors.red : Colors.black,
+                  onPressed: () {
+                    setState(() {
+                      isCaseSensitive = !isCaseSensitive;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    isCaseSensitive
+                        ? datasource.updateFilter(_controller.text)
+                        : datasource.updateFilter2(_controller.text);
+                  },
+                ),
+              ],
+            ),
           ),
         ),
         columns: srumColumns(type)

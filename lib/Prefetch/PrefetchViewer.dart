@@ -24,7 +24,7 @@ class _PrefetchViewerState extends State<PrefetchViewer>
   final _filterController = TextEditingController();
   @override
   bool get wantKeepAlive => true; // Add this line
-
+  bool isCaseSensitive = false;
   @override
   void initState() {
     super.initState();
@@ -39,11 +39,29 @@ class _PrefetchViewerState extends State<PrefetchViewer>
   }
 
   void updateFilter(String value) {
+    // 대소문자 구별
     if (mounted) {
       setState(() {
+        print("updateFilter: $value");
+        print(isCaseSensitive);
         filter = value;
         filteredList = fullList
             .where((item) => item.values.any((v) => v.contains(filter)))
+            .toList();
+      });
+    }
+  }
+
+  void updateFilter2(String value) {
+    // 대소문자 구별 X
+    if (mounted) {
+      setState(() {
+        print("updateFilter2: $value");
+        print(isCaseSensitive);
+        filter = value.toLowerCase();
+        filteredList = fullList
+            .where((item) =>
+                item.values.any((v) => v.toLowerCase().contains(filter)))
             .toList();
       });
     }
@@ -197,15 +215,34 @@ class _PrefetchViewerState extends State<PrefetchViewer>
         header: TextField(
           controller: _filterController,
           onSubmitted: (value) {
-            updateFilter(value);
+            isCaseSensitive ? updateFilter(value) : updateFilter2(value);
           },
           decoration: InputDecoration(
             labelText: "Search",
-            suffixIcon: IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                updateFilter(_filterController.text);
-              },
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.text_fields, // Change this icon as needed
+                    // Change these colors as needed
+                  ),
+                  color: isCaseSensitive ? Colors.red : Colors.black,
+                  onPressed: () {
+                    setState(() {
+                      isCaseSensitive = !isCaseSensitive;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    isCaseSensitive
+                        ? updateFilter(_filterController.text)
+                        : updateFilter2(_filterController.text);
+                  },
+                ),
+              ],
             ),
           ),
         ),

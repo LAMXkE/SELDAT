@@ -50,12 +50,6 @@ class _ParsedDataListViewState extends State<ParsedDataListView> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // decoration: BoxDecoration(
-      //   border: Border.all(
-      //     color: const Color.fromARGB(
-      //         255, 199, 199, 199), // This sets the border color
-      //   ),
-      // ),
       padding: const EdgeInsets.all(20.0),
       child: Container(
         decoration: BoxDecoration(
