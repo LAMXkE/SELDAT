@@ -6,6 +6,8 @@ class Systeminfofetcher {
   final DatabaseManager db;
   Map<String, String> data = {};
 
+  bool isFetched = false;
+
   Systeminfofetcher(this.db);
 
   Future<void> loadSystemInfo() async {
@@ -27,6 +29,7 @@ class Systeminfofetcher {
         for (var element in value) {
           data[element.key] = element.value;
         }
+        isFetched = true;
       }
     });
   }

@@ -86,9 +86,14 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     super.dispose();
   }
 
+  void onAnalysisDone() {
+    checkScanned();
+  }
+
   void checkScanned() {
     print("CURRENT STATE: ------------------");
     print("log: ${logFetcher.isFetched}");
+    print("analysed: ${logFetcher.isAnalisisDone()}");
     print("registry: ${registryFetcher.isFetched}");
     print("srum: ${srumFetcher.isFetched}");
     print("prefetch: ${prefetchFetcher.isFetched}");
@@ -113,6 +118,9 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
       if (jumplistFetcher.isFetched) {
         loadingStatus[4] = 0;
       }
+      if (logFetcher.isAnalisisDone()) {
+        loadingStatus[5] = 0;
+      }
     });
 
     if (logFetcher.isFetched &&
@@ -120,12 +128,12 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
         srumFetcher.isFetched &&
         prefetchFetcher.isFetched &&
         jumplistFetcher.isFetched &&
+        logFetcher.isAnalisisDone() &&
         systeminfofetcher.getData().isNotEmpty) {
       Future.delayed(const Duration(seconds: 1), () {}).then(
         (value) {
           print("All data fetched $scanned");
           setState(() {
-            loadingStatus[5] = 0;
             scanned = true;
           });
         },
@@ -145,6 +153,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
 
     logFetcher.setAddCount(addEventLog);
     logFetcher.setAnomalyCount(addAnomalyCount);
+    logFetcher.onAnalysisDone = onAnalysisDone;
     registryFetcher.setAddCount(addRegistry);
     registryFetcher.addAnomalyCount = addAnomalyCount;
     srumFetcher.setAddCount(addSRUM);
@@ -208,6 +217,12 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     }
 
     await db.open();
+
+    if (!systeminfofetcher.isFetched) {
+      systeminfofetcher.loadSystemInfo().then((value) {
+        checkScanned();
+      });
+    }
 
     if (!logFetcher.isFetched) {
       logFetcher

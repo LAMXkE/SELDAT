@@ -65,9 +65,11 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
-    List<Map<String, Object?>> evtxList = await database!.query('evtx',
-        where: 'isMalicious = ? OR sigmaLevel > ?', whereArgs: [1, 0]);
-    return evtxList.length;
+    return await database!.transaction((txn) async {
+      List<Map<String, Object?>> evtxList = await txn.query('evtx',
+          where: 'isMalicious = ? OR sigmaLevel > ?', whereArgs: [1, 0]);
+      return evtxList.length;
+    });
   }
 
   Future<List<Map<String, Object?>>> getEventLogList(String filename) async {
@@ -78,18 +80,23 @@ class DatabaseManager {
       return database!.query('evtx');
     }
 
-    return database!
-        .query('evtx', where: 'filename = ?', whereArgs: [filename]);
+    return await database!.transaction((txn) async {
+      return await txn
+          .query('evtx', where: 'filename = ?', whereArgs: [filename]);
+    });
   }
 
   Future<int> updateMaliciousEvtx(int timestamp) async {
     if (database == null) {
       await open();
     }
-    print("[*] Updating malicious evtx $timestamp");
-    return database!.update('evtx', {'isMalicious': 1},
-        where: 'timestamp >= ? AND timestamp < ?',
-        whereArgs: [timestamp, timestamp + 60 * 1000]);
+    int result = 0;
+    await database!.transaction((txn) async {
+      result = await txn.update('evtx', {'isMalicious': 1},
+          where: 'timestamp >= ? AND timestamp < ?',
+          whereArgs: [timestamp, timestamp + 60 * 1000]);
+    });
+    return result;
   }
 
   Future<void> updateEventLog(eventLog event) async {
@@ -115,19 +122,18 @@ class DatabaseManager {
     } else if (level == "critical") {
       intLevel = 4;
     }
-    print(
-        "[*] Updating Sigma Rule $eventRecordId, $filename, $name, $level, $intLevel");
 
-    int result = await database!.update(
-      'evtx',
-      {
-        "sigmaName": name,
-        "sigmaLevel": intLevel,
-      },
-      where: 'event_record_id = ? AND filename = ?',
-      whereArgs: [eventRecordId, filename],
-    );
-    print("[*] Updated $result rows");
+    await database!.transaction((txn) async {
+      await txn.update(
+        'evtx',
+        {
+          "sigmaName": name,
+          "sigmaLevel": intLevel,
+        },
+        where: 'event_record_id = ? AND filename = ?',
+        whereArgs: [eventRecordId, filename],
+      );
+    });
   }
 
   List<Map<String, Object?>> EventLogCache = [];
@@ -252,7 +258,9 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
-    await database?.insert('registry', reg.toMap());
+    await database!.transaction((txn) async {
+      await txn.insert('registry', reg.toMap());
+    });
   }
 
   Future<void> insertRegistryList(List<REGISTRY> reg) async {
@@ -357,53 +365,55 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
-    List<Map<String, Object?>> prefetchList = await database!.query('prefetch');
-    return prefetchList
-        .map((e) => prefetch(
-              filename: e['filename'] as String,
-              createTime:
-                  DateTime.fromMillisecondsSinceEpoch(e['createTime'] as int),
-              modifiedTime:
-                  DateTime.fromMicrosecondsSinceEpoch(e['modifiedTime'] as int),
-              fileSize: e['fileSize'] as int,
-              process_exe: e['process_exe'] as String,
-              process_path: e['process_path'] as String,
-              run_counter: e['run_counter'] as int,
-              lastRuntime0: e['lastRuntime0'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['lastRuntime0'] as int),
-              lastRuntime1: e['lastRuntime1'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['lastRuntime1'] as int),
-              lastRuntime2: e['lastRuntime2'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['lastRuntime2'] as int),
-              lastRuntime3: e['lastRuntime3'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['lastRuntime3'] as int),
-              lastRuntime4: e['lastRuntime4'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['lastRuntime4'] as int),
-              lastRuntime5: e['lastRuntime5'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['lastRuntime5'] as int),
-              lastRuntime6: e['lastRuntime6'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['lastRuntime6'] as int),
-              lastRuntime7: e['lastRuntime7'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['lastRuntime7'] as int),
-              missingProcess: e['missingProcess'] as int == 1 ? true : false,
-            ))
-        .toList();
+    return await database!.transaction((txn) async {
+      List<Map<String, Object?>> prefetchList = await txn.query('prefetch');
+      return prefetchList
+          .map((e) => prefetch(
+                filename: e['filename'] as String,
+                createTime:
+                    DateTime.fromMillisecondsSinceEpoch(e['createTime'] as int),
+                modifiedTime: DateTime.fromMicrosecondsSinceEpoch(
+                    e['modifiedTime'] as int),
+                fileSize: e['fileSize'] as int,
+                process_exe: e['process_exe'] as String,
+                process_path: e['process_path'] as String,
+                run_counter: e['run_counter'] as int,
+                lastRuntime0: e['lastRuntime0'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['lastRuntime0'] as int),
+                lastRuntime1: e['lastRuntime1'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['lastRuntime1'] as int),
+                lastRuntime2: e['lastRuntime2'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['lastRuntime2'] as int),
+                lastRuntime3: e['lastRuntime3'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['lastRuntime3'] as int),
+                lastRuntime4: e['lastRuntime4'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['lastRuntime4'] as int),
+                lastRuntime5: e['lastRuntime5'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['lastRuntime5'] as int),
+                lastRuntime6: e['lastRuntime6'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['lastRuntime6'] as int),
+                lastRuntime7: e['lastRuntime7'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['lastRuntime7'] as int),
+                missingProcess: e['missingProcess'] as int == 1 ? true : false,
+              ))
+          .toList();
+    });
   }
 
   Future<void> insertJumplist(jumplist jump) async {
@@ -419,101 +429,110 @@ class DatabaseManager {
     if (database == null) {
       await open();
     }
-    List<Map<String, Object?>> jumplistList = await database!.query('jumplist');
-    return jumplistList
-        .map((e) => jumplist(
-              filename: e['filename'] as String,
-              fullPath: e['fullPath'] as String,
-              recordTime: e['recordTime'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(e['recordTime'] as int),
-              createTime: e['createTime'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(e['createTime'] as int),
-              modifiedTime: e['modifiedTime'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(
-                      e['modifiedTime'] as int),
-              accessTime: e['accessTime'] == null
-                  ? null
-                  : DateTime.fromMillisecondsSinceEpoch(e['accessTime'] as int),
-              fileAttributes: e['fileAttributes'] as String,
-              fileSize: e['fileSize'] as int,
-              entryID: e['entryID'] as String,
-              applicationID: e['applicationID'] as String,
-              fileExtension: e['fileExtension'] as String,
-              computerName: e['computerName'] as String,
-              jumplistsFilename: e['jumplistsFilename'] as String,
-            ))
-        .toList();
+    return await database!.transaction((txn) async {
+      List<Map<String, Object?>> jumplistList = await txn.query('jumplist');
+      return jumplistList
+          .map((e) => jumplist(
+                filename: e['filename'] as String,
+                fullPath: e['fullPath'] as String,
+                recordTime: e['recordTime'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['recordTime'] as int),
+                createTime: e['createTime'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['createTime'] as int),
+                modifiedTime: e['modifiedTime'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['modifiedTime'] as int),
+                accessTime: e['accessTime'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        e['accessTime'] as int),
+                fileAttributes: e['fileAttributes'] as String,
+                fileSize: e['fileSize'] as int,
+                entryID: e['entryID'] as String,
+                applicationID: e['applicationID'] as String,
+                fileExtension: e['fileExtension'] as String,
+                computerName: e['computerName'] as String,
+                jumplistsFilename: e['jumplistsFilename'] as String,
+              ))
+          .toList();
+    });
   }
 
   Future<Map<String, dynamic>> getRelatedArtifacts(DateTime timestamp) async {
     if (database == null) {
       await open();
     }
-    Map<String, dynamic> artifacts = {};
-    int ts = timestamp.millisecondsSinceEpoch;
+    return await database!.transaction((txn) async {
+      Map<String, dynamic> artifacts = {};
+      int ts = timestamp.millisecondsSinceEpoch;
 
-    int tsStart = ts - 5 * 60 * 1000;
-    int tsEnd = ts + 5 * 60 * 1000;
+      int tsStart = ts - 5 * 60 * 1000;
+      int tsEnd = ts + 5 * 60 * 1000;
 
-    artifacts['evtx'] = await database!.query('evtx',
-        where: 'timestamp >= ? AND timestamp < ?', whereArgs: [tsStart, tsEnd]);
+      artifacts['evtx'] = await txn.query('evtx',
+          where: 'timestamp >= ? AND timestamp < ?',
+          whereArgs: [tsStart, tsEnd]);
 
-    artifacts['srum'] = await database!.query('SRUM',
-        where: 'timestamp >= ? AND timestamp < ?', whereArgs: [tsStart, tsEnd]);
+      artifacts['srum'] = await txn.query('SRUM',
+          where: 'timestamp >= ? AND timestamp < ?',
+          whereArgs: [tsStart, tsEnd]);
 
-    artifacts['prefetch'] = await database!.query('prefetch',
-        where: '(createTime >= ? AND createTime < ?) OR '
-            '(modifiedTime >= ? AND modifiedTime < ?) OR '
-            '(lastRuntime0 >= ? AND lastRuntime0 < ?) OR '
-            '(lastRuntime1 >= ? AND lastRuntime1 < ?) OR '
-            '(lastRuntime2 >= ? AND lastRuntime2 < ?) OR '
-            '(lastRuntime3 >= ? AND lastRuntime3 < ?) OR '
-            '(lastRuntime4 >= ? AND lastRuntime4 < ?) OR '
-            '(lastRuntime5 >= ? AND lastRuntime5 < ?) OR '
-            '(lastRuntime6 >= ? AND lastRuntime6 < ?) OR '
-            '(lastRuntime7 >= ? AND lastRuntime7 < ?)',
-        whereArgs: [
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-        ]);
-    artifacts['jumplist'] = await database!.query('jumplist',
-        where: '(recordTime >= ? AND recordTime < ?) OR '
-            '(createTime >= ? AND createTime < ?) OR '
-            '(modifiedTime >= ? AND modifiedTime < ?) OR '
-            '(accessTime >= ? AND accessTime < ?)',
-        whereArgs: [
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-          tsStart,
-          tsEnd,
-        ]);
+      artifacts['prefetch'] = await txn.query('prefetch',
+          where: '(createTime >= ? AND createTime < ?) OR '
+              '(modifiedTime >= ? AND modifiedTime < ?) OR '
+              '(lastRuntime0 >= ? AND lastRuntime0 < ?) OR '
+              '(lastRuntime1 >= ? AND lastRuntime1 < ?) OR '
+              '(lastRuntime2 >= ? AND lastRuntime2 < ?) OR '
+              '(lastRuntime3 >= ? AND lastRuntime3 < ?) OR '
+              '(lastRuntime4 >= ? AND lastRuntime4 < ?) OR '
+              '(lastRuntime5 >= ? AND lastRuntime5 < ?) OR '
+              '(lastRuntime6 >= ? AND lastRuntime6 < ?) OR '
+              '(lastRuntime7 >= ? AND lastRuntime7 < ?)',
+          whereArgs: [
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+          ]);
+      artifacts['jumplist'] = await txn.query('jumplist',
+          where: '(recordTime >= ? AND recordTime < ?) OR '
+              '(createTime >= ? AND createTime < ?) OR '
+              '(modifiedTime >= ? AND modifiedTime < ?) OR '
+              '(accessTime >= ? AND accessTime < ?)',
+          whereArgs: [
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+            tsStart,
+            tsEnd,
+          ]);
 
-    return artifacts;
+      return artifacts;
+    });
   }
 
   Future<void> insertComputerInfo(Map<String, Object?> computerInfo) async {
@@ -527,15 +546,17 @@ class DatabaseManager {
 
   //get computer info
   Future<List<computerInfo>> getComputerInfo() async {
-    List<Map<String, Object?>> result = await database!.query('computerInfo');
+    return await database!.transaction((txn) async {
+      List<Map<String, Object?>> result = await txn.query('computerInfo');
 
-    List<computerInfo> computerInfoList = result
-        .map((e) => computerInfo(
-              key: e['key'] as String,
-              value: e['value'] as String,
-            ))
-        .toList();
-    return computerInfoList;
+      List<computerInfo> computerInfoList = result
+          .map((e) => computerInfo(
+                key: e['key'] as String,
+                value: e['value'] as String,
+              ))
+          .toList();
+      return computerInfoList;
+    });
   }
 
   void close() {

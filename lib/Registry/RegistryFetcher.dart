@@ -55,8 +55,8 @@ class RegistryFetcher {
         };
       }
       isFetched = true;
+      Modified = registryList.where((element) => element.modified).toList();
     }
-    Modified = registryList.where((element) => element.modified).toList();
   }
 
   Map<String, dynamic> getRegistryData() {
@@ -129,7 +129,7 @@ class RegistryFetcher {
       addCount(registryList.length);
       print("current registryData : ${registryList.length}");
       onRegistryDataChanged();
-      // db.insertRegistryList(registryList);
+      db.insertRegistryList(registryList);
     }
 
     isFetched = true;

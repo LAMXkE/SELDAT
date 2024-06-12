@@ -39,7 +39,7 @@ class _LogAnalysisState extends State<LogAnalysis>
   int pageSize = 15;
   List<int> maliciousList = [];
   List<int> maliciousLevel = [];
-  PaginatedList<eventLog>? logdata;
+  List<eventLog> logdata = [];
 
   @override
   bool get wantKeepAlive => true;
@@ -55,6 +55,26 @@ class _LogAnalysisState extends State<LogAnalysis>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    if (logdata.isEmpty) {
+      db.getEventLogList("").then((value) {
+        setState(() {
+          logdata = value
+              .map((e) => eventLog(
+                    event_id: e['event_id'] as int,
+                    event_record_id: e['event_record_id'] as int,
+                    filename: e['filename'] as String,
+                    timestamp: DateTime.fromMillisecondsSinceEpoch(
+                        e['timestamp'] as int),
+                    full_log: e['full_log'] as String,
+                    sigmaLevel: e['sigmaLevel'] as int,
+                    sigmaName: e['sigmaName'] as String,
+                    isMalicious: e['isMalicious'] == 1 ? true : false,
+                  ))
+              .toList();
+        });
+      });
+    }
     return Row(
       children: [
         Flexible(
@@ -95,7 +115,13 @@ class _LogAnalysisState extends State<LogAnalysis>
                     ),
                     Flexible(
                       flex: 7,
-                      child: GraphView(data: logdata),
+                      child: GraphView(
+                          data: selectedFilename != ""
+                              ? logdata
+                                  .where((element) =>
+                                      element.filename == selectedFilename)
+                                  .toList()
+                              : logdata),
                     ),
                   ],
                 ),
@@ -210,9 +236,6 @@ class _LogAnalysisState extends State<LogAnalysis>
                     }
                     idx++;
                   }
-                  setState(() {
-                    logdata = data;
-                  });
                   return (data.items, data.nextPageToken);
                 },
                 filters: [

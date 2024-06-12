@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:intl/intl.dart';
 
 class Artifacts extends StatelessWidget {
   final PieChartData data;
@@ -10,6 +11,7 @@ class Artifacts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var f = NumberFormat('###,###,###,###');
     return Container(
       child: Column(
         children: [
@@ -24,7 +26,7 @@ class Artifacts extends StatelessWidget {
           Column(
             children: [
               Text(
-                "$totalArtifactsCount Artifacts",
+                "${f.format(totalArtifactsCount)} Artifacts",
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,

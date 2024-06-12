@@ -27,6 +27,12 @@ class Srumfetcher {
 
     if (!Directory(".\\Artifacts\\Srum").existsSync()) {
       Directory(".\\Artifacts\\Srum").create();
+    } else {
+      Directory(".\\Artifacts\\Srum").listSync().forEach((entity) {
+        if (entity is File && entity.path.endsWith('.csv')) {
+          entity.deleteSync();
+        }
+      });
     }
   }
 
@@ -50,26 +56,21 @@ class Srumfetcher {
   Future<void> fetchSrumData() async {
     // Run SrumECmd in the tools directory
 
-    Directory(".\\Artifacts\\Srum").listSync().forEach((entity) {
-      if (entity is File && entity.path.endsWith('.csv')) {
-        entity.deleteSync();
-      }
-    });
     if (srumList.isNotEmpty) {
       isFetched = true;
       return;
     }
     print('Fetching SRUM data...');
 
-    // Network Usage count:           74492
-    // RegExp regExp = RegExp("count: *?([0-9]+(,?[0-9]+)?)");
     Process.run(
       'tools/SrumECmd.exe',
       ["-d", 'C:\\Windows\\System32\\sru', "--csv", "Artifacts\\Srum"],
     ).then((ProcessResult result) async {
+      print(result.stdout);
       print("SrumECmd exit code: ${result.exitCode}");
 
       if (result.exitCode == 0) {
+        await Future.delayed(const Duration(seconds: 1));
         // Read all CSV files in the current directory
         Directory(".\\Artifacts\\Srum").listSync().forEach((entity) {
           if (entity is File && entity.path.endsWith('.csv')) {
@@ -122,6 +123,7 @@ class Srumfetcher {
           }
         }
         db.insertSRUM(srumList);
+        print('SRUM data fetched! ${srumList.length} records added to DB.');
         isFetched = true;
       } else {
         print('SrumECmd failed with exit code ${result.exitCode}');

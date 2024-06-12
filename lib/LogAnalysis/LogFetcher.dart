@@ -18,6 +18,9 @@ class LogFetcher {
   Function addCount = () {};
   Function addAnomalyCount = () {};
   bool isFetched = false;
+  bool sigmaFinish = false;
+  bool aiFinish = false;
+  Function onAnalysisDone = () {};
   int anomalyCount = 0;
   final DatabaseManager db;
 
@@ -39,6 +42,10 @@ class LogFetcher {
     this.addAnomalyCount = addAnomalyCount;
   }
 
+  bool isAnalisisDone() {
+    return sigmaFinish && aiFinish;
+  }
+
   Future<bool> loadDB() async {
     List<Map<String, Object?>> evtxFileList = await db.getEvtxFileList();
     if (evtxFileList.isNotEmpty) {
@@ -49,6 +56,8 @@ class LogFetcher {
       await db.getEvtxAnomalyCount().then((value) {
         anomalyCount = value;
         isFetched = true;
+        aiFinish = true;
+        sigmaFinish = true;
         return true;
       });
     }
@@ -69,9 +78,9 @@ class LogFetcher {
     for (var file in eventLogFileList) {
       await parseEventLog(file, db);
     }
-    await runAIModelPredict();
-    await judgeSigmaRule();
-    isFetched = true;
+    await Future.wait([runAIModelPredict(), judgeSigmaRule()]).then((value) {
+      isFetched = true;
+    });
   }
 
   Future scan(Directory dir) async {
@@ -172,18 +181,23 @@ class LogFetcher {
           }
 
           if (isMalicious) {
-            print("Malicious Event: $element");
-            db
-                .updateMaliciousEvtx(int.parse(timeGroup) * 1000)
-                .then((value) => addAnomalyCount(value));
+            db.updateMaliciousEvtx(int.parse(timeGroup) * 1000).then((value) {
+              print("Anomaly Updated: $value");
+              addAnomalyCount(value);
+            });
           }
         }
         if (element.contains("[*] Printing results")) {
           isResult = true;
         }
       });
+    }).then((value) {
+      aiFinish = true;
       print("AI Model Finished");
       db.clearCache();
+      Future.delayed(const Duration(seconds: 1), () {
+        onAnalysisDone();
+      });
     });
     // eventLog(event_id: 0, filename: "", full_log: "", isAnalyzed: false, riskScore: 0.0, timestamp: DateTime.now());
   }
@@ -201,7 +215,7 @@ class LogFetcher {
 
   Future<void> judgeSigmaRule() async {
     print("Running Sigma Detection");
-    Process.run(
+    await Process.run(
             "./tools/chainsaw/chainsaw.exe",
             [
               "hunt",
@@ -231,12 +245,13 @@ class LogFetcher {
             .replaceAll("/", "\\");
         String level = data["level"].toString();
         String name = data["name"].toString();
-
-        addAnomalyCount(
-            await db.updateSigmaRule(eventRecordId, filename, name, level));
+        db.updateSigmaRule(eventRecordId, filename, name, level);
+        addAnomalyCount(1);
       }
+      sigmaFinish = true;
       print("Sigma Finished");
       db.clearCache();
+      onAnalysisDone();
     });
     return Future.value();
   }

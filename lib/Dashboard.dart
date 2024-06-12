@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:seldat/Dashboard/Artifacts.dart';
 import 'SystemInfo/SystemInfoViewer.dart';
+import 'package:intl/intl.dart';
 
 class Dashboard extends StatefulWidget {
   final int evtxCount;
@@ -143,13 +144,14 @@ class _DashboardState extends State<Dashboard>
           return widget.prefetchCount;
         case 'Jumplist':
           return widget.jumplistCount;
-        case 'Annomaly':
+        case 'Anomaly':
           return widget.anomalyCount;
         default:
           return 0;
       }
     }
 
+    var f = NumberFormat('###,###,###,###');
     return Container(
       color: const Color.fromARGB(255, 231, 231, 231),
       child: Container(
@@ -213,13 +215,13 @@ class _DashboardState extends State<Dashboard>
                               'SRUM',
                               'Prefetch',
                               'Jumplist',
-                              'Annomaly',
+                              'Anomaly',
                             ];
 
                             String title =
                                 titles[index]; // Get the title from the list
-                            String count =
-                                '${getArtifactCount(title)}'; // Get the count for this title
+                            String count = f.format(getArtifactCount(
+                                title)); // Get the count for this title
 
                             return Expanded(
                               child: Container(

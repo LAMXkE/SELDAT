@@ -191,28 +191,32 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
               ),
             ),
             const SizedBox(height: 15.0),
-            for (String db in widget.dbList)
-              Column(
+            SingleChildScrollView(
+              child: Column(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          widget.chooseDB(db);
-                          Navigator.pop(context); // Close the dialog
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 236, 236,
-                              236), // This is the color of the button
-                        ),
-                        child: Text(db),
+                  for (String db in widget.dbList)
+                    Column(children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              widget.chooseDB(db);
+                              Navigator.pop(context); // Close the dialog
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(255, 236,
+                                  236, 236), // This is the color of the button
+                            ),
+                            child: Text(db),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 5.0),
+                      const SizedBox(height: 5.0),
+                    ]),
                 ],
               ),
+            ),
             const SizedBox(height: 10.0),
             ElevatedButton(
                 onPressed: () {
