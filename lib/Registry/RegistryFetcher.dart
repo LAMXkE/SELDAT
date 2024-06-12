@@ -54,9 +54,9 @@ class RegistryFetcher {
           'subkeys': {},
         };
       }
-      isFetched = true;
       Modified = registryList.where((element) => element.modified).toList();
     }
+    isFetched = true;
   }
 
   Map<String, dynamic> getRegistryData() {

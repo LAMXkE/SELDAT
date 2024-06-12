@@ -91,9 +91,8 @@ class Prefetchfetcher {
           'missingProcess': e.missingProcess ? 'Yes' : 'No',
         };
       }).toList();
-      isFetched = true;
-      return true;
     }
+    isFetched = true;
     return false;
   }
 

@@ -45,10 +45,9 @@ class JumplistFetcher {
           'jumplistsFilename': e.jumplistsFilename,
         };
       }).toList();
-      isFetched = true;
       addCount(allJumplistFile.length);
-      return true;
     }
+    isFetched = true;
     return false;
   }
 

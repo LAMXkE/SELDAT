@@ -55,11 +55,11 @@ class LogFetcher {
       }
       await db.getEvtxAnomalyCount().then((value) {
         anomalyCount = value;
-        isFetched = true;
         aiFinish = true;
         sigmaFinish = true;
         return true;
       });
+      isFetched = true;
     }
     return false;
   }
@@ -195,7 +195,7 @@ class LogFetcher {
       aiFinish = true;
       print("AI Model Finished");
       db.clearCache();
-      Future.delayed(const Duration(seconds: 1), () {
+      Future.delayed(const Duration(seconds: 5), () {
         onAnalysisDone();
       });
     });

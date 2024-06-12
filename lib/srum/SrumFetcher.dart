@@ -66,11 +66,9 @@ class Srumfetcher {
       'tools/SrumECmd.exe',
       ["-d", 'C:\\Windows\\System32\\sru', "--csv", "Artifacts\\Srum"],
     ).then((ProcessResult result) async {
-      print(result.stdout);
       print("SrumECmd exit code: ${result.exitCode}");
 
       if (result.exitCode == 0) {
-        await Future.delayed(const Duration(seconds: 1));
         // Read all CSV files in the current directory
         Directory(".\\Artifacts\\Srum").listSync().forEach((entity) {
           if (entity is File && entity.path.endsWith('.csv')) {
