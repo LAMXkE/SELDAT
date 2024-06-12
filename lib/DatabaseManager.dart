@@ -61,6 +61,15 @@ class DatabaseManager {
     });
   }
 
+  Future<int> getEvtxAnomalyCount() async {
+    if (database == null) {
+      await open();
+    }
+    List<Map<String, Object?>> evtxList = await database!.query('evtx',
+        where: 'isMalicious = ? OR sigmaLevel > ?', whereArgs: [1, 0]);
+    return evtxList.length;
+  }
+
   Future<List<Map<String, Object?>>> getEventLogList(String filename) async {
     if (database == null) {
       await open();
@@ -73,12 +82,12 @@ class DatabaseManager {
         .query('evtx', where: 'filename = ?', whereArgs: [filename]);
   }
 
-  Future<void> updateMaliciousEvtx(int timestamp) async {
+  Future<int> updateMaliciousEvtx(int timestamp) async {
     if (database == null) {
       await open();
     }
     print("[*] Updating malicious evtx $timestamp");
-    database!.update('evtx', {'isMalicious': 1},
+    return database!.update('evtx', {'isMalicious': 1},
         where: 'timestamp >= ? AND timestamp < ?',
         whereArgs: [timestamp, timestamp + 60 * 1000]);
   }
@@ -230,6 +239,15 @@ class DatabaseManager {
     return PaginatedList(items: logs, nextPageToken: nextPageToken);
   }
 
+  Future<int> getMaliciousRegistryCount() async {
+    if (database == null) {
+      await open();
+    }
+    List<Map<String, Object?>> registryList = await database!
+        .query('registry', where: 'modified = ?', whereArgs: [1]);
+    return registryList.length;
+  }
+
   Future<void> insertRegistry(REGISTRY reg) async {
     if (database == null) {
       await open();
@@ -251,6 +269,23 @@ class DatabaseManager {
     });
   }
 
+  Future<List<REGISTRY>> getModifiedRegistryList() async {
+    if (database == null) {
+      await open();
+    }
+    List<Map<String, Object?>> registryList = await database!
+        .query('registry', where: 'modified = ?', whereArgs: [1]);
+    return registryList
+        .map((e) => REGISTRY(
+              directory: e['directory'] as String,
+              key: e['key'] as String,
+              value: e['value'] as String,
+              type: e['type'] as String,
+              modified: e['modified'] as int == 1 ? true : false,
+            ))
+        .toList();
+  }
+
   Future<List<REGISTRY>> getRegistryList() async {
     if (database == null) {
       await open();
@@ -262,6 +297,7 @@ class DatabaseManager {
               key: e['key'] as String,
               value: e['value'] as String,
               type: e['type'] as String,
+              modified: e['modified'] as int == 1 ? true : false,
             ))
         .toList();
   }
@@ -480,6 +516,28 @@ class DatabaseManager {
     return artifacts;
   }
 
+  Future<void> insertComputerInfo(Map<String, Object?> computerInfo) async {
+    if (database == null) {
+      await open();
+    }
+    await database!.transaction((txn) async {
+      await txn.insert('computerInfo', computerInfo);
+    });
+  }
+
+  //get computer info
+  Future<List<computerInfo>> getComputerInfo() async {
+    List<Map<String, Object?>> result = await database!.query('computerInfo');
+
+    List<computerInfo> computerInfoList = result
+        .map((e) => computerInfo(
+              key: e['key'] as String,
+              value: e['value'] as String,
+            ))
+        .toList();
+    return computerInfoList;
+  }
+
   void close() {
     database?.close();
     print("[*] Database closed");
@@ -505,6 +563,11 @@ class DatabaseManager {
                             isFetched BOOLEAN
                           );
 
+                          CREATE TABLE "computerInfo" (
+                            "key"	TEXT,
+                            "value"	TEXT
+                          )
+
                           CREATE TABLE evtx(
                             id INTEGER NOT NULL,
                             timestamp DATETIME,
@@ -524,6 +587,7 @@ class DatabaseManager {
                             "key" VARCHAR NOT NULL,
                             value VARCHAR NOT NULL,
                             type INTEGER NOT NULL,
+                            modified BOOLEAN,
                             PRIMARY KEY(id)
                           );
 
@@ -662,12 +726,14 @@ class REGISTRY {
   final String key;
   final String value;
   final String type;
+  final bool modified;
 
   const REGISTRY({
     required this.directory,
     required this.key,
     required this.value,
     required this.type,
+    required this.modified,
   });
 
   Map<String, Object?> toMap() {
@@ -676,6 +742,7 @@ class REGISTRY {
       'key': key,
       'value': value,
       'type': type,
+      'modified': modified ? 1 : 0,
     };
   }
 }
@@ -831,6 +898,23 @@ class jumplist {
       'fileExtension': fileExtension,
       'computerName': computerName,
       'jumplistsFilename': jumplistsFilename,
+    };
+  }
+}
+
+class computerInfo {
+  final String key;
+  final String value;
+
+  const computerInfo({
+    required this.key,
+    required this.value,
+  });
+
+  Map<String, Object?> toMap() {
+    return {
+      'key': key,
+      'value': value,
     };
   }
 }

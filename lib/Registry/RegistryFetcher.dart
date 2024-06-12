@@ -18,7 +18,10 @@ class RegistryMapping {
 class RegistryFetcher {
   // Add your class members and methods here
   Map<String, dynamic> registryDatas = {};
+  List<REGISTRY> Modified = [];
   Function addCount = () {};
+  Function addAnomalyCount = () {};
+  int anomalyCount = 0;
   bool isFetched = false;
   final Map<String, dynamic> _RegistryValues = {};
   DatabaseManager db;
@@ -38,6 +41,7 @@ class RegistryFetcher {
       'allusers',
       'currentConfig',
     ];
+    anomalyCount = await db.getMaliciousRegistryCount();
     registryList = await db.getRegistryList();
     if (registryList.isNotEmpty) {
       addCount(registryList.length);
@@ -52,6 +56,7 @@ class RegistryFetcher {
       }
       isFetched = true;
     }
+    Modified = registryList.where((element) => element.modified).toList();
   }
 
   Map<String, dynamic> getRegistryData() {
@@ -102,14 +107,14 @@ class RegistryFetcher {
   fetchAllRegistryData() async {
     // db.getRegistryList().then((value) => {for (var data in value) {}});
 
-    if (_RegistryValues.isNotEmpty) {
-      return _RegistryValues;
-    }
+    // if (_RegistryValues.isNotEmpty) {
+    //   return _RegistryValues;
+    // }
     var registryNames = [
-      'currentConfig',
+      'localMachine',
       'classesRoot',
       'currentUser',
-      'localMachine',
+      'currentConfig',
       'allusers',
     ];
     // var futures = registryNames
@@ -120,11 +125,11 @@ class RegistryFetcher {
       Map<String, dynamic> registryData =
           await compute(fetchRegistryData, regName);
       _RegistryValues[regName] = registryData;
-      print("current registryData : ${registryData.length}");
       List<REGISTRY> registryList = toDBRegistry(registryData);
       addCount(registryList.length);
+      print("current registryData : ${registryList.length}");
       onRegistryDataChanged();
-      db.insertRegistryList(registryList);
+      // db.insertRegistryList(registryList);
     }
 
     isFetched = true;
@@ -135,11 +140,15 @@ class RegistryFetcher {
   List<REGISTRY> toDBRegistry(Map<String, dynamic> registry) {
     List<REGISTRY> registryList = [];
     registry['values'].forEach((key, value) {
+      if (value['modified'] == true) {
+        addAnomalyCount(1);
+      }
       registryList.add(REGISTRY(
         key: key.toString(),
         directory: registry['directory'].toString(),
         value: value['data'].toString(),
         type: value['type'].toString(),
+        modified: value['modified'] ?? false,
       ));
     });
     if (registry['subkeys'].isNotEmpty) {
@@ -257,13 +266,21 @@ Future<Map<String, dynamic>> fetchRegistryValues(
         'data': '(No Data)',
       };
     }
-    return {
+    regkey.close();
+
+    var ret = {
       // key의 registryName, values, subkeys를 반환
       'registryName': path.split('\\').last,
       'directory': '${key.name}\\$path',
       'values': values,
       'subkeys': subkeys,
     };
+
+    if (isModified(ret)) {
+      ret['modified'] = true;
+    }
+
+    return ret;
   } on WindowsException catch (e) {
     // 엑세스관련 예외처리
     // print('$key에서 WindowsException 발생: ${e.message}');
@@ -332,35 +349,36 @@ Map<String, List<dynamic>> originalValue = {
       [1],
   'localMachine\\SOFTWARE\\Microsoft\\Ole\\EnableDCOM': ['Y'],
   'localMachine\\SOFTWARE\\Microsoft\\Security Center\\AntiVirusDisableNotify':
-      ['X (Bad: 1 / Good: 0)'],
+      [0],
   'localMachine\\SOFTWARE\\Microsoft\\Security Center\\FirewallDisableNotify': [
-    'X (Bad: 1 / Good: 0)'
+    0
   ],
-  'localMachine\\SOFTWARE\\Microsoft\\Security Center\\AntiVirusOverride': [
-    'X (Bad: 1 / Good: 0)'
-  ],
+  'localMachine\\SOFTWARE\\Microsoft\\Security Center\\AntiVirusOverride': [0],
   'localMachine\\SYSTEM\\ControlSet00x\\Control\\SafeBoot\\': ['!None'],
   'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\EnableBalloonTips':
-      ['X (Bad: 1 / Good: 0)'],
+      [0],
   'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\DisableTaskMgr':
-      ['X (Bad: 1 / Good: 0)'],
+      ['0'],
   'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\NoControlPannel':
-      ['X (Bad: 1 / Good: 0)'],
+      [0],
   'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\DisableRegistryTools':
-      ['X (Bad: 1 / Good: 0)'],
+      [0],
   'localMachine\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU\\NoAutoUpdate':
-      ['X (Bad: 1 / Good: 0)'],
+      [0],
   'localMachine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\*.exe\\Debugger':
-      ['X (Bad: 1 / Good: 0)'],
+      [0],
   'localMachine\\SYSTEM\\ControlSet00x\\Services\\Tcpip\\Parameters\\MaxUserPort':
-      ['X (Bad: 1 / Good: 0)'],
+      [0],
 };
 
 bool isModified(Map<String, dynamic> registry) {
+  print(registry['directory']);
   if (originalValue.containsKey(registry['directory'])) {
+    print("check modified: ${registry['directory']}");
     for (var key in registry['values'].keys) {
       if (!originalValue[registry['directory']]!
           .contains(registry['values'][key]['data'])) {
+        print("Modified: ${registry['directory']}");
         return true;
       }
     }

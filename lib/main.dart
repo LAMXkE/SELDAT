@@ -9,6 +9,7 @@ import 'package:seldat/JumpList/JumpListFetcher.dart';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
 import 'package:seldat/Registry/RegistryFetcher.dart';
 import 'package:seldat/Report/ReportSkeleton.dart';
+import 'package:seldat/SystemInfo/SystemInfoFetcher.dart';
 import 'package:seldat/srum/SrumFetcher.dart';
 import 'package:seldat/Prefetch/PrefetchFetcher.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -71,6 +72,8 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   late Srumfetcher srumFetcher;
   late Prefetchfetcher prefetchFetcher;
   late JumplistFetcher jumplistFetcher;
+  late Systeminfofetcher systeminfofetcher;
+  int anomalyCount = 0;
   bool scanned = false;
   bool loadingFromDB = false;
   List<int> loadingStatus = [1, 1, 1, 1, 1, 1];
@@ -95,9 +98,11 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     setState(() {
       if (logFetcher.isFetched) {
         loadingStatus[0] = 0;
+        anomalyCount += logFetcher.anomalyCount;
       }
       if (registryFetcher.isFetched) {
         loadingStatus[1] = 0;
+        anomalyCount += registryFetcher.anomalyCount;
       }
       if (srumFetcher.isFetched) {
         loadingStatus[2] = 0;
@@ -111,11 +116,16 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     });
 
     if (logFetcher.isFetched &&
-        // registryFetcher.isFetched &&
-        srumFetcher.isFetched) {
+        registryFetcher.isFetched &&
+        srumFetcher.isFetched &&
+        prefetchFetcher.isFetched &&
+        jumplistFetcher.isFetched &&
+        systeminfofetcher.getData().isNotEmpty) {
       Future.delayed(const Duration(seconds: 1), () {}).then(
         (value) {
+          print("All data fetched $scanned");
           setState(() {
+            loadingStatus[5] = 0;
             scanned = true;
           });
         },
@@ -131,9 +141,20 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     registryFetcher = RegistryFetcher(db);
     prefetchFetcher = Prefetchfetcher(db);
     jumplistFetcher = JumplistFetcher(db);
+    systeminfofetcher = Systeminfofetcher(db);
 
     logFetcher.setAddCount(addEventLog);
+    logFetcher.addAnomalyCount = () {
+      setState(() {
+        anomalyCount++;
+      });
+    };
     registryFetcher.setAddCount(addRegistry);
+    registryFetcher.addAnomalyCount = () {
+      setState(() {
+        anomalyCount++;
+      });
+    };
     srumFetcher.setAddCount(addSRUM);
     prefetchFetcher.setAddCount(addPrefetch);
     jumplistFetcher.setAddCount(addJumplist);
@@ -155,6 +176,11 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
       if (!loadingFromDB) {
         return;
       }
+
+      systeminfofetcher.loadDB().then((value) {
+        print("systeminfo loaded");
+        checkScanned();
+      });
 
       logFetcher.loadDB().then((value) {
         print("log loaded");
@@ -371,9 +397,11 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                   children: [
                     if (scanned)
                       Dashboard(
+                          systemData: systeminfofetcher.getData(),
                           evtxCount: evtxCount,
                           regCount: regCount,
                           srumCount: srumCount,
+                          anomalyCount: anomalyCount,
                           prefetchCount: prefetchCount,
                           jumplistCount: jumplistCount,
                           loadingStatus: loadingStatus)
@@ -465,6 +493,10 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                                 logFetcher.judgeSigmaRule();
                               },
                               child: const Text("Load Sigma Rule")),
+                          ElevatedButton(
+                              onPressed: () =>
+                                  systeminfofetcher.loadSystemInfo(),
+                              child: const Text("Load Registry")),
                         ],
                       ),
                     ),

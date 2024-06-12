@@ -16,7 +16,9 @@ class LogFetcher {
   // Properties
   List<File> eventLogFileList = List.empty(growable: true);
   Function addCount = () {};
+  Function addAnomalyCount = () {};
   bool isFetched = false;
+  int anomalyCount = 0;
   final DatabaseManager db;
 
   // Constructor
@@ -40,13 +42,10 @@ class LogFetcher {
         eventLogFileList.add(File(file['filename'].toString()));
         addCount(int.parse(file['logCount'].toString()));
       }
-      await db
-          .getEventLog(filename: "", pageSize: 15, pageToken: "0")
-          .then((value) {
-        if (value.items.isNotEmpty) {
-          isFetched = true;
-          return true;
-        }
+      await db.getEvtxAnomalyCount().then((value) {
+        anomalyCount = value;
+        isFetched = true;
+        return true;
       });
     }
     return false;
@@ -170,7 +169,9 @@ class LogFetcher {
 
           if (isMalicious) {
             print("Malicious Event: $element");
-            db.updateMaliciousEvtx(int.parse(timeGroup) * 1000);
+            db
+                .updateMaliciousEvtx(int.parse(timeGroup) * 1000)
+                .then((value) => addAnomalyCount(value));
           }
         }
         if (element.contains("[*] Printing results")) {
@@ -227,7 +228,8 @@ class LogFetcher {
         String level = data["level"].toString();
         String name = data["name"].toString();
 
-        await db.updateSigmaRule(eventRecordId, filename, name, level);
+        addAnomalyCount(
+            await db.updateSigmaRule(eventRecordId, filename, name, level));
       }
       print("Sigma Finished");
       db.clearCache();

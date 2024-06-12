@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:seldat/Dashboard/Artifacts.dart';
-import 'SystemInfoViewer.dart';
+import 'SystemInfo/SystemInfoViewer.dart';
 
 class Dashboard extends StatefulWidget {
   final int evtxCount;
@@ -9,6 +9,8 @@ class Dashboard extends StatefulWidget {
   final int srumCount;
   final int prefetchCount;
   final int jumplistCount;
+  final int anomalyCount;
+  final Map<String, String> systemData;
   final List<int> loadingStatus;
 
   const Dashboard({
@@ -19,6 +21,8 @@ class Dashboard extends StatefulWidget {
     required this.prefetchCount,
     required this.jumplistCount,
     required this.loadingStatus,
+    required this.systemData,
+    required this.anomalyCount,
   });
 
   @override
@@ -27,16 +31,8 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard>
     with AutomaticKeepAliveClientMixin {
-  late final SystemInfoViewer _systemInfoViewer;
-
   @override
   bool get wantKeepAlive => true;
-
-  @override
-  void initState() {
-    super.initState();
-    _systemInfoViewer = const SystemInfoViewer();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,6 +143,8 @@ class _DashboardState extends State<Dashboard>
           return widget.prefetchCount;
         case 'Jumplist':
           return widget.jumplistCount;
+        case 'Annomaly':
+          return widget.anomalyCount;
         default:
           return 0;
       }
@@ -307,7 +305,7 @@ class _DashboardState extends State<Dashboard>
             ),
             Expanded(
               flex: 60,
-              child: _systemInfoViewer,
+              child: SystemInfoViewer(data: widget.systemData),
             ),
           ],
         ),
