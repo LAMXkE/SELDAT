@@ -116,8 +116,7 @@ class JumplistFetcher {
         .map((line) => line.split('\t'))
         .toList(); // Skip the first line
 
-    List<Map<String, dynamic>> allJumpListFile =
-        Rows.where((row) => row.length >= 13).map((row) {
+    allJumplistFile = Rows.where((row) => row.length >= 13).map((row) {
       return {
         'filename': row[0],
         'fullPath': row[1],
@@ -135,7 +134,7 @@ class JumplistFetcher {
       };
     }).toList();
     // print(allJumpListFile);
-    for (var element in allJumpListFile) {
+    for (var element in allJumplistFile) {
       db.insertJumplist(jumplist(
         filename: element['filename'],
         fullPath: element['fullPath'],
@@ -157,6 +156,6 @@ class JumplistFetcher {
       addCount(1);
     }
     isFetched = true;
-    return allJumpListFile;
+    return allJumplistFile;
   }
 }

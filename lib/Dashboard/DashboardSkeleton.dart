@@ -29,23 +29,13 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
   @override
   Widget build(BuildContext context) {
     if (widget.loadfromDB && !widget.chosen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return Dialog(
-              child: SizedBox(
-                width: 700, // Set the width
-                height: 400,
-                child: SingleChildScrollView(
-                  child: _chooseDBView(context),
-                ),
-              ),
-            );
-          },
-        );
-      });
+      return SizedBox(
+        width: 700, // Set the width
+        height: 400,
+        child: SingleChildScrollView(
+          child: _chooseDBView(context),
+        ),
+      );
     }
 
     bool allOne = widget.loadingStatus.every((status) => status == 1);
@@ -54,118 +44,88 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
         widget.loadingStatus.take(5).every((status) => status == 0);
 
     if (widget.loadfromDB && widget.chosen) {
-      if (allOne && !dialogShown) {
-        // If all values are 1 and the dialog has not been shown yet, show the dialog
-        dialogShown = true;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (BuildContext context) {
-              return Dialog(
-                child: SizedBox(
-                  width: 700, // Set the width
-                  height: 400,
-                  child: _loadFromDBStatusView(),
-                ),
-              );
-            },
-          );
-        });
-      } else if (firstFiveZero) {
-        // If the first 5 values are 0, close the popup
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-          }
-        });
+      return SizedBox(
+        width: 700, // Set the width
+        height: 400,
+        child: _loadFromDBStatusView(),
+      );
+    } else if (firstFiveZero) {
+      // If the first 5 values are 0, close the popup
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
       }
     }
 
     if (!widget.loadfromDB) {
       // If loadfromDB is false and chosen is true, show the dialog
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-            return Dialog(
-              child: SizedBox(
-                width: 700, // Set the width
-                height: 400,
-                // padding: const EdgeInsets.all(8.0), // Set the padding
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min, // Set the size to minimum
-                      children: [
-                        const Text(
-                          "Artifacts Analysis",
-                          style: TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 25.0),
-                        const SizedBox(
-                          width: 400,
-                          child: Text(
-                            "If you want to collect and analyze all the artifacts in the new database, press the 'Start Analysis' button below",
-                            style: TextStyle(
-                              height: 2,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30.0),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 200,
-                              height: 50,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  widget.startAnalysis();
-                                  Navigator.pop(
-                                      context); // Close the popup when the button is clicked
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color.fromARGB(
-                                      255,
-                                      236,
-                                      236,
-                                      236), // This is the color of the button
-                                ),
-                                child: const Text(
-                                  "Start Analysis",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+      return SizedBox(
+        width: 700, // Set the width
+        height: 400,
+        // padding: const EdgeInsets.all(8.0), // Set the padding
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(40.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Set the size to minimum
+              children: [
+                const Text(
+                  "Artifacts Analysis",
+                  style: TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 25.0),
+                const SizedBox(
+                  width: 400,
+                  child: Text(
+                    "If you want to collect and analyze all the artifacts in the new database, press the 'Start Analysis' button below",
+                    style: TextStyle(
+                      height: 2,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w400,
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        );
-      });
+                const SizedBox(height: 30.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 200,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          widget.startAnalysis();
+                          Navigator.pop(
+                              context); // Close the popup when the button is clicked
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color.fromARGB(255, 236, 236,
+                              236), // This is the color of the button
+                        ),
+                        child: const Text(
+                          "Start Analysis",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
     } else if (widget.loadfromDB && firstFiveZero) {
       // If the first 5 values are 0, close the popup
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Navigator.canPop(context)) {
-          Navigator.pop(context);
-        }
-      });
+
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
     }
     return Container(
         alignment: Alignment.center,
@@ -220,10 +180,9 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
             const SizedBox(height: 10.0),
             ElevatedButton(
                 onPressed: () {
-                  widget
-                      .chooseDB("${DateTime.now().millisecondsSinceEpoch}.db");
                   widget.setLoadfromDB(false);
-                  Navigator.pop(context); // Close the dialog
+                  widget.chooseDB(
+                      "${DateTime.now().millisecondsSinceEpoch}.db"); // Close the dialog
                 },
                 child: const Text("Fetch New Artifacts")),
           ],

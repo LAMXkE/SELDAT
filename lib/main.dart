@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:paged_datatable/l10n/generated/l10n.dart';
 import 'package:seldat/Dashboard/DashboardSkeleton.dart';
@@ -41,7 +42,9 @@ void main() async {
     await windowManager.setResizable(true);
   });
 
-  runApp(const MainApp());
+  runApp(const MaterialApp(localizationsDelegates: [
+    PagedDataTableLocalization.delegate,
+  ], restorationScopeId: "Seldat", color: Colors.transparent, home: MainApp()));
 }
 
 class MainApp extends StatefulWidget {
@@ -75,6 +78,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   late Systeminfofetcher systeminfofetcher;
   int anomalyCount = 0;
   bool scanned = false;
+  bool scanning = false;
   bool loadingFromDB = false;
   List<int> loadingStatus = [1, 1, 1, 1, 1, 1];
   List<String> dbList = [];
@@ -170,6 +174,39 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     if (dbList.isNotEmpty) {
       loadingFromDB = true;
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (context, setState) => SimpleDialog(
+              children: [
+                DashboardSkeleton(
+                  startAnalysis: startScan,
+                  chooseDB: (String dbpath) {
+                    setState(() {
+                      db.dbName = dbpath;
+                    });
+                    initFetcher();
+                  },
+                  chosen: db.dbName != '' ? true : false,
+                  dbList: dbList,
+                  loadfromDB: loadingFromDB,
+                  setLoadfromDB: (value) {
+                    setState(() {
+                      loadingFromDB = value;
+                    });
+                  },
+                  loadingStatus: loadingStatus,
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    });
   }
 
   void initFetcher() {
@@ -256,7 +293,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     }
 
     setState(() {
-      scanned = true;
+      scanning = true;
     });
   }
 
@@ -302,39 +339,12 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     });
   }
 
-  void _showDialogIfNeeded() {
-    if (!scanned) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return DashboardSkeleton(
-              startAnalysis: startScan,
-              chooseDB: (String dbpath) {
-                setState(() {
-                  db.dbName = dbpath;
-                });
-                initFetcher();
-              },
-              chosen: db.dbName != '' ? true : false,
-              dbList: dbList,
-              loadfromDB: loadingFromDB,
-              setLoadfromDB: (value) {
-                setState(() {
-                  loadingFromDB = value;
-                });
-              },
-              loadingStatus: loadingStatus,
-            );
-          },
-        );
-      });
-    }
+  void showDialogIfNeeded() {
+    if (!scanning) {}
   }
 
   @override
   Widget build(BuildContext context) {
-    _showDialogIfNeeded();
     return Container(
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
@@ -351,180 +361,154 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
               offset: const Offset(0, 3),
             )
           ]),
-      child: MaterialApp(
-        localizationsDelegates: const [
-          PagedDataTableLocalization.delegate,
-        ],
-        restorationScopeId: "Seldat",
-        scrollBehavior: MyMaterialScrollBehavior(),
-        color: Colors.transparent,
-        home: Scaffold(
-          backgroundColor: Colors.white,
-          appBar: AppBar(
-            shadowColor: Colors.black,
-            title: GestureDetector(
-              onTapDown: (TapDownDetails detail) {
-                windowManager.startDragging();
-              },
-              behavior: HitTestBehavior.translucent,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Icon(icon: Icons.menu, color: Colors.white),
-                  Text(
-                    "SELDAT",
-                    style: GoogleFonts.inter(
-                        fontSize: 20,
-                        color: _primaryColor,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.minimize),
-                        onPressed: () {
-                          print("minimize");
-                          windowManager.minimize();
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          db.close();
-                          windowManager.close();
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            backgroundColor: Colors.white,
-            centerTitle: false,
-          ),
-          body: Column(
-            children: [
-              _tabBar(),
-              Expanded(
-                child: TabBarView(
-                  controller: tabController,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          shadowColor: Colors.black,
+          title: GestureDetector(
+            onTapDown: (TapDownDetails detail) {
+              windowManager.startDragging();
+            },
+            behavior: HitTestBehavior.translucent,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Icon(icon: Icons.menu, color: Colors.white),
+                Text(
+                  "SELDAT",
+                  style: GoogleFonts.inter(
+                      fontSize: 20,
+                      color: _primaryColor,
+                      fontWeight: FontWeight.bold),
+                ),
+                Row(
                   children: [
-                    if (scanned)
-                      Dashboard(
-                          systemData: systeminfofetcher.getData(),
-                          evtxCount: evtxCount,
-                          regCount: regCount,
-                          srumCount: srumCount,
-                          anomalyCount: anomalyCount,
-                          prefetchCount: prefetchCount,
-                          jumplistCount: jumplistCount,
-                          loadingStatus: loadingStatus)
-                    else
-                      DashboardSkeleton(
-                        startAnalysis: startScan,
-                        chooseDB: (String dbpath) {
-                          setState(() {
-                            db.dbName = dbpath;
-                          });
-                          initFetcher();
-                        },
-                        chosen: db.dbName != '' ? true : false,
-                        dbList: dbList,
-                        loadfromDB: loadingFromDB,
-                        setLoadfromDB: (value) {
-                          setState(() {
-                            loadingFromDB = value;
-                          });
-                        },
-                        loadingStatus: loadingStatus,
-                      ),
-                    if (scanned)
-                      Report(
-                        logFetcher: logFetcher,
-                        registryFetcher: registryFetcher,
-                        srumfetcher: srumFetcher,
-                        prefetchFetcher: prefetchFetcher,
-                        jumplistFetcher: jumplistFetcher,
-                      )
-                    else
-                      const ReportSkeleton(),
-                    const SetupPage(),
-                    Center(
-                      child: Column(
-                        children: [
-                          ElevatedButton(
-                              onPressed: () {
-                                addEventLog(1);
-                              },
-                              child: const Text("Add Evtx")),
-                          ElevatedButton(
-                              onPressed: () {
-                                addRegistry(1);
-                              },
-                              child: const Text("Add Registry")),
-                          ElevatedButton(
-                              onPressed: () {
-                                addSRUM(1);
-                              },
-                              child: const Text("Add SRUM")),
-                          ElevatedButton(
-                              onPressed: () {
-                                addPrefetch(1);
-                              },
-                              child: const Text("Add Prefetch")),
-                          ElevatedButton(
-                              onPressed: () {
-                                addJumplist(1);
-                              },
-                              child: const Text("Add Jumplist")),
-                          ElevatedButton(
-                              onPressed: () {
-                                logFetcher.runAIModelPredict();
-                              },
-                              child: const Text("Run AI Model")),
-                          ElevatedButton(
-                              onPressed: () {
-                                srumFetcher.fetchSrumData();
-                              },
-                              child: const Text("Fetch SRUM")),
-                          ElevatedButton(
-                              onPressed: () {
-                                registryFetcher.fetchAllRegistryData();
-                              },
-                              child: const Text("Fetch Registry")),
-                          ElevatedButton(
-                              onPressed: () {
-                                prefetchFetcher.getAllPrefetchFile();
-                              },
-                              child: const Text("Fetch Prefetch")),
-                          ElevatedButton(
-                              onPressed: () {
-                                jumplistFetcher.getAllJumpListFile();
-                              },
-                              child: const Text("Fetch Jumplist")),
-                          ElevatedButton(
-                              onPressed: () {
-                                logFetcher.judgeSigmaRule();
-                              },
-                              child: const Text("Load Sigma Rule")),
-                          ElevatedButton(
-                              onPressed: () =>
-                                  systeminfofetcher.loadSystemInfo(),
-                              child: const Text("Load Registry")),
-                        ],
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.minimize),
+                      onPressed: () {
+                        print("minimize");
+                        windowManager.minimize();
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        db.close();
+                        windowManager.close();
+                      },
                     ),
                   ],
                 ),
-              )
-            ],
+              ],
+            ),
           ),
+          backgroundColor: Colors.white,
+          centerTitle: false,
+        ),
+        body: Column(
+          children: [
+            tabBar(),
+            Expanded(
+              child: TabBarView(
+                controller: tabController,
+                children: [
+                  if (scanned || scanning)
+                    Dashboard(
+                        systemData: systeminfofetcher.getData(),
+                        evtxCount: evtxCount,
+                        regCount: regCount,
+                        srumCount: srumCount,
+                        anomalyCount: anomalyCount,
+                        prefetchCount: prefetchCount,
+                        jumplistCount: jumplistCount,
+                        loadingStatus: loadingStatus)
+                  else
+                    Container(),
+                  if (scanned)
+                    Report(
+                      logFetcher: logFetcher,
+                      registryFetcher: registryFetcher,
+                      srumfetcher: srumFetcher,
+                      prefetchFetcher: prefetchFetcher,
+                      jumplistFetcher: jumplistFetcher,
+                    )
+                  else
+                    const ReportSkeleton(),
+                  const SetupPage(),
+                  Center(
+                    child: Column(
+                      children: [
+                        ElevatedButton(
+                            onPressed: () {
+                              addEventLog(1);
+                            },
+                            child: const Text("Add Evtx")),
+                        ElevatedButton(
+                            onPressed: () {
+                              addRegistry(1);
+                            },
+                            child: const Text("Add Registry")),
+                        ElevatedButton(
+                            onPressed: () {
+                              addSRUM(1);
+                            },
+                            child: const Text("Add SRUM")),
+                        ElevatedButton(
+                            onPressed: () {
+                              addPrefetch(1);
+                            },
+                            child: const Text("Add Prefetch")),
+                        ElevatedButton(
+                            onPressed: () {
+                              addJumplist(1);
+                            },
+                            child: const Text("Add Jumplist")),
+                        ElevatedButton(
+                            onPressed: () {
+                              logFetcher.runAIModelPredict();
+                            },
+                            child: const Text("Run AI Model")),
+                        ElevatedButton(
+                            onPressed: () {
+                              srumFetcher.fetchSrumData();
+                            },
+                            child: const Text("Fetch SRUM")),
+                        ElevatedButton(
+                            onPressed: () {
+                              registryFetcher.fetchAllRegistryData();
+                            },
+                            child: const Text("Fetch Registry")),
+                        ElevatedButton(
+                            onPressed: () {
+                              prefetchFetcher.getAllPrefetchFile();
+                            },
+                            child: const Text("Fetch Prefetch")),
+                        ElevatedButton(
+                            onPressed: () {
+                              jumplistFetcher.getAllJumpListFile();
+                            },
+                            child: const Text("Fetch Jumplist")),
+                        ElevatedButton(
+                            onPressed: () {
+                              logFetcher.judgeSigmaRule();
+                            },
+                            child: const Text("Load Sigma Rule")),
+                        ElevatedButton(
+                            onPressed: () => systeminfofetcher.loadSystemInfo(),
+                            child: const Text("Load Registry")),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          ],
         ),
       ),
     );
   }
 
-  Widget _tabBar() {
+  Widget tabBar() {
     return TabBar(
       controller: tabController,
       labelColor: const Color.fromARGB(255, 0xFF, 0x61, 0x61),

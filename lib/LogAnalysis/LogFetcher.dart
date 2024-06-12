@@ -166,7 +166,7 @@ class LogFetcher {
       }
     });
     print("Running AI Model");
-    Process.run("./tools/runModel.exe", [],
+    await Process.run("./tools/runModel.exe", [],
             workingDirectory: "${Directory.current.path}/tools")
         .then((ProcessResult process) {
       bool isResult = false;

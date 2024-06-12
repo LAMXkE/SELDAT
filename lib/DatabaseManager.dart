@@ -372,7 +372,7 @@ class DatabaseManager {
                 filename: e['filename'] as String,
                 createTime:
                     DateTime.fromMillisecondsSinceEpoch(e['createTime'] as int),
-                modifiedTime: DateTime.fromMicrosecondsSinceEpoch(
+                modifiedTime: DateTime.fromMillisecondsSinceEpoch(
                     e['modifiedTime'] as int),
                 fileSize: e['fileSize'] as int,
                 process_exe: e['process_exe'] as String,

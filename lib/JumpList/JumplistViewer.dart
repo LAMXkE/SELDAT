@@ -25,13 +25,6 @@ class _JumplistViewerContentState extends State<JumplistViewer>
   bool get wantKeepAlive => true; // Add this line
 
   @override
-  void initState() {
-    super.initState();
-    fullList = widget.jumplistFetcher.getJumplistList();
-    filteredList = fullList;
-  }
-
-  @override
   void dispose() {
     _filterController.dispose();
     super.dispose();
@@ -88,8 +81,12 @@ class _JumplistViewerContentState extends State<JumplistViewer>
 
   @override
   Widget build(BuildContext context) {
+    if (fullList.isEmpty) {
+      fullList = widget.jumplistFetcher.getJumplistList();
+      filteredList = fullList.toList();
+    }
+    print("fullList: $fullList");
     super.build(context);
-
     var columnWidths = {
       'filename': 500,
       'fullPath': 600,

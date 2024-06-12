@@ -62,7 +62,7 @@ class Srumfetcher {
     }
     print('Fetching SRUM data...');
 
-    Process.run(
+    await Process.run(
       'tools/SrumECmd.exe',
       ["-d", 'C:\\Windows\\System32\\sru', "--csv", "Artifacts\\Srum"],
     ).then((ProcessResult result) async {
