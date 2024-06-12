@@ -10,9 +10,19 @@ class SrumDataSource extends DataTableSource {
     filteredData = srumData;
   }
   void updateFilter(String filter) {
+    print("updateFilter: $filter");
     filteredData = srumData
         .where((item) =>
             item.toMap().values.any((v) => v.toString().contains(filter)))
+        .toList();
+    notifyListeners();
+  }
+
+  void updateFilter2(String filter) {
+    print("updateFilter2: $filter");
+    filteredData = srumData
+        .where((item) => item.toMap().values.any(
+            (v) => v.toString().toLowerCase().contains(filter.toLowerCase())))
         .toList();
     notifyListeners();
   }
