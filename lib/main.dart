@@ -73,7 +73,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   late JumplistFetcher jumplistFetcher;
   bool scanned = false;
   bool loadingFromDB = false;
-  List<int> loadingStatus = [1, 1, 1, 1, 1];
+  List<int> loadingStatus = [1, 1, 1, 1, 1, 1];
   List<String> dbList = [];
   String DBPath = '';
 
@@ -263,8 +263,39 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
     });
   }
 
+  void _showDialogIfNeeded() {
+    if (!scanned) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return DashboardSkeleton(
+              startAnalysis: startScan,
+              chooseDB: (String dbpath) {
+                setState(() {
+                  db.dbName = dbpath;
+                });
+                initFetcher();
+              },
+              chosen: db.dbName != '' ? true : false,
+              dbList: dbList,
+              loadfromDB: loadingFromDB,
+              setLoadfromDB: (value) {
+                setState(() {
+                  loadingFromDB = value;
+                });
+              },
+              loadingStatus: loadingStatus,
+            );
+          },
+        );
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    _showDialogIfNeeded();
     return Container(
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
@@ -344,25 +375,27 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                           regCount: regCount,
                           srumCount: srumCount,
                           prefetchCount: prefetchCount,
-                          jumplistCount: jumplistCount)
+                          jumplistCount: jumplistCount,
+                          loadingStatus: loadingStatus)
                     else
                       DashboardSkeleton(
-                          startAnalysis: startScan,
-                          chooseDB: (String dbpath) {
-                            setState(() {
-                              db.dbName = dbpath;
-                            });
-                            initFetcher();
-                          },
-                          chosen: db.dbName != '' ? true : false,
-                          dbList: dbList,
-                          loadfromDB: loadingFromDB,
-                          setLoadfromDB: (value) {
-                            setState(() {
-                              loadingFromDB = value;
-                            });
-                          },
-                          loadingStatus: loadingStatus),
+                        startAnalysis: startScan,
+                        chooseDB: (String dbpath) {
+                          setState(() {
+                            db.dbName = dbpath;
+                          });
+                          initFetcher();
+                        },
+                        chosen: db.dbName != '' ? true : false,
+                        dbList: dbList,
+                        loadfromDB: loadingFromDB,
+                        setLoadfromDB: (value) {
+                          setState(() {
+                            loadingFromDB = value;
+                          });
+                        },
+                        loadingStatus: loadingStatus,
+                      ),
                     if (scanned)
                       Report(
                         logFetcher: logFetcher,
