@@ -280,3 +280,91 @@ Future<Map<String, dynamic>> fetchRegistryValues(
     };
   }
 }
+
+Map<String, List<dynamic>> originalValue = {
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\Folder\\Hidden\\SHOWALL\\CheckedValue':
+      [1],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\Folder\\HideFileExt\\CheckedValue':
+      [1],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\Folder\\HideFileExt\\DefaultValue':
+      [1],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\Folder\\HideFileExt\\UncheckedValue':
+      [0],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\Folder\\SuperHidden\\Type':
+      ['checkbox'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run\\Random Files':
+      [],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce\\Random Files':
+      [],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Shell':
+      ['explorer.exe'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Userinit':
+      ['C:\\Windows\\system32\\userinit.exe'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Winlogon\\Taskman':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Classes\\exefile\\shell\\open\\command\\(기본값)': [
+    '“%1” %*'
+  ],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisableLocalMachineRun':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisableLocalMachineRunOnce':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\DisableCurrentUserRunOnce':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Microsoft\\Internet Explorer\\Main\\FeatureControl\\FEATURE_BROWSER_EMULATION\\*.exe':
+      ['0x2AF9'],
+  'localMachine\\SOFTWARE\\Microsoft\\Internet Explorer\\Main\\Default_Search_URL':
+      ['http://go.microsoft.com'],
+  'localMachine\\SOFTWARE\\Microsoft\\Internet Explorer\\Main\\Search Page': [
+    'http://go.microsoft.com'
+  ],
+  'localMachine\\SOFTWARE\\Microsoft\\Internet Explorer\\Main\\Start Page': [
+    'http://go.microsoft.com'
+  ],
+  'localMachine\\SYSTEM\\ControlSet00x\\Services\\RemoteAccess\\Parameters\\ServiceDLL':
+      ['%SystemRoot%\\System32\\mprdim.dll'],
+  'localMachine\\SYSTEM\\ControlSet00x\\Services\\wscsvc\\Start': [4],
+  'localMachine\\SYSTEM\\ControlSet00x\\Services\\SharedAccess\\Parameters\\FirewallPolicy\\StandardProfile\\EnableFirewall':
+      ['Firewall Policy, Default: 1'],
+  'localMachine\\SYSTEM\\ControlSet00x\\Services\\SharedAccess\\Start': [4],
+  'localMachine\\SYSTEM\\ControlSet00x\\Control\\Lsa\\restrictanonymous': [0],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\EnableLUA':
+      [1],
+  'localMachine\\SOFTWARE\\Microsoft\\Ole\\EnableDCOM': ['Y'],
+  'localMachine\\SOFTWARE\\Microsoft\\Security Center\\AntiVirusDisableNotify':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Microsoft\\Security Center\\FirewallDisableNotify': [
+    'X (Bad: 1 / Good: 0)'
+  ],
+  'localMachine\\SOFTWARE\\Microsoft\\Security Center\\AntiVirusOverride': [
+    'X (Bad: 1 / Good: 0)'
+  ],
+  'localMachine\\SYSTEM\\ControlSet00x\\Control\\SafeBoot\\': ['!None'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\\EnableBalloonTips':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\DisableTaskMgr':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\NoControlPannel':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\DisableRegistryTools':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU\\NoAutoUpdate':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\*.exe\\Debugger':
+      ['X (Bad: 1 / Good: 0)'],
+  'localMachine\\SYSTEM\\ControlSet00x\\Services\\Tcpip\\Parameters\\MaxUserPort':
+      ['X (Bad: 1 / Good: 0)'],
+};
+
+bool isModified(Map<String, dynamic> registry) {
+  if (originalValue.containsKey(registry['directory'])) {
+    for (var key in registry['values'].keys) {
+      if (!originalValue[registry['directory']]!
+          .contains(registry['values'][key]['data'])) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}

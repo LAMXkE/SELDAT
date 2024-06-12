@@ -11,7 +11,6 @@ import 'package:tflite_flutter/tflite_flutter.dart';
 import 'package:win32/win32.dart';
 import 'package:xml/xml.dart';
 import 'package:xml/xpath.dart';
-import 'package:yaml/yaml.dart';
 
 class LogFetcher {
   // Properties
@@ -235,28 +234,4 @@ class LogFetcher {
     });
     return Future.value();
   }
-}
-
-class SigmaRule {
-  String ruleName;
-  String ruleDescription;
-  String ruleLevel;
-  String ruleAuthor;
-  String ruleStatus;
-  YamlList ruleReferences;
-  YamlList ruleTags;
-  YamlMap ruleLogsource;
-  YamlMap ruleDetection;
-
-  SigmaRule({
-    required this.ruleName,
-    required this.ruleDescription,
-    required this.ruleLevel,
-    required this.ruleAuthor,
-    required this.ruleStatus,
-    required this.ruleReferences,
-    required this.ruleTags,
-    required this.ruleLogsource,
-    required this.ruleDetection,
-  });
 }

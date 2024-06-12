@@ -163,7 +163,7 @@ class _LogAnalysisState extends State<LogAnalysis>
               child: PagedDataTable<String, eventLog>(
                 controller: _controller,
                 initialPageSize: 100,
-                pageSizes: const [15, 30, 50, 100],
+                pageSizes: const [30, 50, 100],
                 configuration: const PagedDataTableConfiguration(),
                 fetcher: (pageSize, sortModel, filterModel, pageToken) async {
                   print(filterModel);
