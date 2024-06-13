@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:paged_datatable/l10n/generated/l10n.dart';
-import 'package:seldat/Dashboard/DashboardSkeleton.dart';
+import 'package:seldat/Dashboard/DbChooser.dart';
 import 'package:seldat/DatabaseManager.dart';
 import 'package:seldat/JumpList/JumpListFetcher.dart';
 import 'package:seldat/LogAnalysis/LogFetcher.dart';
@@ -183,7 +183,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
           return StatefulBuilder(
             builder: (context, setState) => SimpleDialog(
               children: [
-                DashboardSkeleton(
+                DBChooser(
                   startAnalysis: startScan,
                   chooseDB: (String dbpath) {
                     setState(() {
@@ -194,6 +194,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
                   chosen: db.dbName != '' ? true : false,
                   dbList: dbList,
                   loadfromDB: loadingFromDB,
+                  scanned: scanned,
                   setLoadfromDB: (value) {
                     setState(() {
                       loadingFromDB = value;

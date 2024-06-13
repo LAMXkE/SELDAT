@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 
-class DashboardSkeleton extends StatefulWidget {
+class DBChooser extends StatefulWidget {
   final Function startAnalysis;
   final bool loadfromDB;
   final List<int> loadingStatus;
   final List<String> dbList;
   final Function chooseDB;
   final bool chosen;
+  final bool scanned;
   final Function setLoadfromDB;
 
-  const DashboardSkeleton(
+  const DBChooser(
       {super.key,
       required this.startAnalysis,
       required this.loadfromDB,
       required this.loadingStatus,
       required this.dbList,
+      required this.scanned,
       required this.chooseDB,
       required this.chosen,
       required this.setLoadfromDB});
@@ -23,11 +25,16 @@ class DashboardSkeleton extends StatefulWidget {
   _DashboardSkeletonState createState() => _DashboardSkeletonState();
 }
 
-class _DashboardSkeletonState extends State<DashboardSkeleton> {
+class _DashboardSkeletonState extends State<DBChooser> {
   // Your existing variables and methods here
   bool dialogShown = false;
   @override
   Widget build(BuildContext context) {
+    if (widget.scanned) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
     if (widget.loadfromDB && !widget.chosen) {
       return SizedBox(
         width: 700, // Set the width
@@ -162,7 +169,6 @@ class _DashboardSkeletonState extends State<DashboardSkeleton> {
                           ElevatedButton(
                             onPressed: () {
                               widget.chooseDB(db);
-                              Navigator.pop(context); // Close the dialog
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color.fromARGB(255, 236,
