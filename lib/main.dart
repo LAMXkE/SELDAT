@@ -142,6 +142,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
           print("All data fetched $scanned");
           setState(() {
             scanned = true;
+            _setDialogState(() {});
           });
         },
       );
