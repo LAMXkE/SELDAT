@@ -83,6 +83,7 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
   List<int> loadingStatus = [1, 1, 1, 1, 1, 1];
   List<String> dbList = [];
   String DBPath = '';
+  late StateSetter _setDialogState;
 
   @override
   void dispose() {
@@ -126,6 +127,8 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
         loadingStatus[5] = 0;
       }
     });
+
+    _setDialogState(() {});
 
     if (logFetcher.isFetched &&
         registryFetcher.isFetched &&
@@ -181,29 +184,32 @@ class _MainAppState extends State<MainApp> with SingleTickerProviderStateMixin {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return StatefulBuilder(
-            builder: (context, setState) => SimpleDialog(
-              children: [
-                DBChooser(
-                  startAnalysis: startScan,
-                  chooseDB: (String dbpath) {
-                    setState(() {
-                      db.dbName = dbpath;
-                    });
-                    initFetcher();
-                  },
-                  chosen: db.dbName != '' ? true : false,
-                  dbList: dbList,
-                  loadfromDB: loadingFromDB,
-                  scanned: scanned,
-                  setLoadfromDB: (value) {
-                    setState(() {
-                      loadingFromDB = value;
-                    });
-                  },
-                  loadingStatus: loadingStatus,
-                ),
-              ],
-            ),
+            builder: (context, setState) {
+              _setDialogState = setState;
+              return SimpleDialog(
+                children: [
+                  DBChooser(
+                    startAnalysis: startScan,
+                    chooseDB: (String dbpath) {
+                      setState(() {
+                        db.dbName = dbpath;
+                      });
+                      initFetcher();
+                    },
+                    chosen: db.dbName != '' ? true : false,
+                    dbList: dbList,
+                    loadfromDB: loadingFromDB,
+                    scanned: scanned,
+                    setLoadfromDB: (value) {
+                      setState(() {
+                        loadingFromDB = value;
+                      });
+                    },
+                    loadingStatus: loadingStatus,
+                  ),
+                ],
+              );
+            },
           );
         },
       );
