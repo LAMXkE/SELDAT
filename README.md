@@ -61,7 +61,8 @@ Filter logs with content, timestamp, anomaly
 ## Registry
 ![image](https://github.com/LAMXkE/Seldat/assets/39945981/ce1216b2-79f2-4830-b4d9-6f056c83e2a2)
 ## SRUM, Prefech, Jumplist
-![image](https://github.com/LAMXkE/Seldat/assets/39945981/984375ef-fc5e-4ce4-813e-a995b8320d52)
+![image](https://github.com/LAMXkE/Seldat/assets/39945981/382c167a-0e5a-41a3-95c4-26cf5dafb825)
+
 
 # External Tools
 
